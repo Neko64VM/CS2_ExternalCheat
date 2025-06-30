@@ -9,8 +9,39 @@ auto cheat = std::make_unique<CFramework>();
 
 void Memory::SetBaseAddress()
 {
-	// ベースアドレス等をここで取得しておく
 	m_dwClientBaseAddr = GetModuleBaseAddress("client.dll");
+}
+
+bool CGameAddress::InitOffset()
+{
+	// PatternScan.
+	auto moduleInfo = m.GetModuleInfo("client.dll");
+	std::vector<uint8_t> bytes = m.ReadBytes((uintptr_t)moduleInfo.lpBaseOfDll, moduleInfo.SizeOfImage);
+
+	//uintptr_t dwCSGOInput = m.FindPattern(bytes, m.m_dwClientBaseAddr, "", 3, 7);
+	//printf("dwCSGOInput : 0x%I64x\n", dwCSGOInput);
+
+	dwViewAngles = offset::dwViewAngles;
+	printf("dwViewAngles : 0x%I64x\n", dwViewAngles);
+
+	dwGlobalVars = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 15 ?? ?? ?? ?? 48 89 42", 3, 7);
+	printf("dwGlobalVars : 0x%I64x\n", dwGlobalVars);
+
+	dwEntityList = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 35 ?? ?? ?? ?? 48 85 f6", 3, 7);
+	printf("dwEntityList : 0x%I64x\n", dwEntityList);
+
+	dwLocalPlayerController = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 05 ?? ?? ?? ?? 8b 9e", 3, 7);
+	printf("dwLocalPlayerController : 0x%I64x\n", dwLocalPlayerController);
+
+	dwViewMatrix = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8d 0d ?? ?? ?? ?? 48 c1 e0 06", 3, 7);
+	printf("dwViewMatrix : 0x%I64x\n", dwViewMatrix);
+
+	dwPlantedC4 = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8b 15 ?? ?? ?? ?? 41 ff c0", 3, 7);
+	printf("dwPlantedC4 : 0x%I64x\n", dwPlantedC4);
+
+	bytes.clear();
+
+	return true;
 }
 
 void Overlay::OverlayUserFunction()
@@ -46,7 +77,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 3;
 
 	// Offset Init (Pattern scan
-	if (!offset.InitOffset())
+	if (!g_game.InitOffset())
 		return 4;
 
 	// ImGui Style
@@ -116,7 +147,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// スレッドを作成
 	std::thread([&]() { cheat->UpdateList(); }).detach(); // ESP/AIM用にプレイヤーのデータをキャッシュする
 
-	// Sleep()の精度を向上させるが、システム全体に影響するので注意 - bHopで使える
+	// Sleep()の精度を向上させるが、システム全体に影響するので注意
 	timeBeginPeriod(1);
 
 	// MainThread

@@ -22,9 +22,6 @@
     <Filter Include="Cheat\SDK">
       <UniqueIdentifier>{32ca098a-5183-47e8-ae19-3f1ca8e372b6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Cheat\SDK\GameSDK">
-      <UniqueIdentifier>{2294c04f-d365-473c-a496-2ef6fb1ad748}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Cheat\SDK\CEntity">
       <UniqueIdentifier>{afd37619-aa38-4c63-9a7d-bf8fa35dcf37}</UniqueIdentifier>
     </Filter>
@@ -42,6 +39,12 @@
     </Filter>
     <Filter Include="Framework\ImGui\Fonts">
       <UniqueIdentifier>{00a1aa39-9b37-4ac6-9211-24f9f71b9cd7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cheat\SDK\CC4">
+      <UniqueIdentifier>{f0d78c2c-1900-4b7a-a843-6cbfc5164ffd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cheat\SDK\GameSDK">
+      <UniqueIdentifier>{2294c04f-d365-473c-a496-2ef6fb1ad748}</UniqueIdentifier>
     </Filter>
     <Filter Include="Cheat\SDK\GameSDK\a2x">
       <UniqueIdentifier>{7d508f3f-8d98-414c-8f20-2ae221edc750}</UniqueIdentifier>
@@ -111,11 +114,11 @@
     <ClCompile Include="Cheat\UpdateList.cpp">
       <Filter>Cheat</Filter>
     </ClCompile>
-    <ClCompile Include="Cheat\SDK\GameSDK\Offset.cpp">
-      <Filter>Cheat\SDK\GameSDK</Filter>
-    </ClCompile>
     <ClCompile Include="Cheat\Render.cpp">
       <Filter>Cheat</Filter>
+    </ClCompile>
+    <ClCompile Include="Cheat\SDK\CC4\CC4.cpp">
+      <Filter>Cheat\SDK\CC4</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -179,9 +182,6 @@
     <ClInclude Include="Cheat\CFramework.h">
       <Filter>Cheat</Filter>
     </ClInclude>
-    <ClInclude Include="Cheat\SDK\GameSDK\Offset.h">
-      <Filter>Cheat\SDK\GameSDK</Filter>
-    </ClInclude>
     <ClInclude Include="Cheat\SDK\GameSDK\a2x\buttons.hpp">
       <Filter>Cheat\SDK\GameSDK\a2x</Filter>
     </ClInclude>
@@ -190,6 +190,9 @@
     </ClInclude>
     <ClInclude Include="Cheat\SDK\GameSDK\a2x\offsets.hpp">
       <Filter>Cheat\SDK\GameSDK\a2x</Filter>
+    </ClInclude>
+    <ClInclude Include="Cheat\SDK\CC4\CC4.h">
+      <Filter>Cheat\SDK\CC4</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

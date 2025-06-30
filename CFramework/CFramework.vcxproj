@@ -142,9 +142,9 @@
     <ClCompile Include="Cheat\Features.cpp" />
     <ClCompile Include="Cheat\Menu.cpp" />
     <ClCompile Include="Cheat\Render.cpp" />
+    <ClCompile Include="Cheat\SDK\CC4\CC4.cpp" />
     <ClCompile Include="Cheat\SDK\CEntity\CEntity.cpp" />
     <ClCompile Include="Cheat\SDK\GameSDK\GameSDK.cpp" />
-    <ClCompile Include="Cheat\SDK\GameSDK\Offset.cpp" />
     <ClCompile Include="Cheat\UpdateList.cpp" />
     <ClCompile Include="Cheat\Visual.cpp" />
     <ClCompile Include="Framework\Config\Config.cpp" />
@@ -165,12 +165,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cheat\CFramework.h" />
+    <ClInclude Include="Cheat\SDK\CC4\CC4.h" />
     <ClInclude Include="Cheat\SDK\CEntity\CEntity.h" />
     <ClInclude Include="Cheat\SDK\GameSDK\a2x\buttons.hpp" />
     <ClInclude Include="Cheat\SDK\GameSDK\a2x\client_dll.hpp" />
     <ClInclude Include="Cheat\SDK\GameSDK\a2x\offsets.hpp" />
     <ClInclude Include="Cheat\SDK\GameSDK\GameSDK.h" />
-    <ClInclude Include="Cheat\SDK\GameSDK\Offset.h" />
     <ClInclude Include="Framework\Config\Config.h" />
     <ClInclude Include="Framework\Framework.h" />
     <ClInclude Include="Framework\ImGui\Custom.h" />
