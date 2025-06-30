@@ -6,8 +6,8 @@ bool CEntity::Update()
 	if (!IsAlive())
 		return false;
 
-	m_vOldOrigin	  = m.Read<Vector3>(m_pCSPlayerPawn + Offset::m_vOldOrigin);
-	m_iHealth		  = m.Read<int>(m_pCSPlayerPawn + Offset::m_iHealth);
+	m_vOldOrigin	  = m.Read<Vector3>(m_pCSPlayerPawn + offset::m_vOldOrigin);
+	m_iHealth		  = m.Read<int>(m_pCSPlayerPawn + offset::m_iHealth);
 
 	return true;
 }
@@ -16,7 +16,7 @@ bool CEntity::Update()
 bool CEntity::UpdateStaticData(const uintptr_t& entitylist)
 {
 	// read pointer
-	uint32_t hPlayerPawn = m.Read<uint32_t>(m_address + Offset::m_hPlayerPawn);
+	uint32_t hPlayerPawn = m.Read<uint32_t>(m_address + offset::m_hPlayerPawn);
 	uintptr_t list = m.Read<uintptr_t>(entitylist + 0x8 * ((hPlayerPawn & 0x7FFF) >> 9) + 0x10);
 
 	if (list == NULL)
@@ -24,17 +24,17 @@ bool CEntity::UpdateStaticData(const uintptr_t& entitylist)
 
 	// pointers
 	m_pCSPlayerPawn = m.Read<uintptr_t>(list + 120 * (hPlayerPawn & 0x1FF));
-	m_pCollision = m.Read<uintptr_t>(m_pCSPlayerPawn + Offset::m_pCollision);
-	m_pGameSceneNode = m.Read<uintptr_t>(m_pCSPlayerPawn + Offset::m_pGameSceneNode);
-	m_pBoneArray = m.Read<uintptr_t>(m_pGameSceneNode + (Offset::m_modelState + 0x80));
-	m_pClippingWeapon = m.Read<uintptr_t>(m_pCSPlayerPawn + Offset::m_pClippingWeapon);
+	m_pCollision = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pCollision);
+	m_pGameSceneNode = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pGameSceneNode);
+	m_pBoneArray = m.Read<uintptr_t>(m_pGameSceneNode + (offset::m_modelState + 0x80));
+	m_pClippingWeapon = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pClippingWeapon);
 
 	// entity data
-	m_iTeamNum = m.Read<int>(m_address + Offset::m_iTeamNum);
-	m_iMaxHealth = m.Read<int>(m_pCSPlayerPawn + Offset::m_iMaxHealth);
+	m_iTeamNum = m.Read<int>(m_address + offset::m_iTeamNum);
+	m_iMaxHealth = m.Read<int>(m_pCSPlayerPawn + offset::m_iMaxHealth);
 	
 	// Name
-	uintptr_t pNameAddress = m.Read<uintptr_t>(m_address + Offset::m_sSanitizedPlayerName);
+	uintptr_t pNameAddress = m.Read<uintptr_t>(m_address + offset::m_sSanitizedPlayerName);
 
 	if (pNameAddress != NULL)
 		m_szPlayerName = m.ReadStringA(pNameAddress);
@@ -55,17 +55,17 @@ bool CEntity::UpdateStaticData(const uintptr_t& entitylist)
 
 bool CEntity::IsAlive()
 {
-	return m.Read<bool>(m_address + Offset::m_bPawnIsAlive);
+	return m.Read<bool>(m_address + offset::m_bPawnIsAlive);
 }
 
 uint32_t CEntity::GetFlag()
 {
-	return m.Read<int>(m_address + Offset::m_fFlags);
+	return m.Read<int>(m_address + offset::m_fFlags);
 }
 
 float CEntity::GetYaw()
 {
-	return m.Read<float>(m_address + Offset::m_angEyeAngles + sizeof(float)); // Vector2(pitch, yaw)
+	return m.Read<float>(m_address + offset::m_angEyeAngles + sizeof(float)); // Vector2(pitch, yaw)
 }
 
 Collision CEntity::GetCollision()
@@ -117,9 +117,7 @@ Vector3 CEntity::GetBoneByID(const int ID)
 
 CSkeletonArray CEntity::GetBoneList()
 {
-	CSkeletonArray pResult = m.Read<CSkeletonArray>(m_pBoneArray);
-
-	return pResult;
+	return m.Read<CSkeletonArray>(m_pBoneArray);
 }
 
 std::string CEntity::GetEntityClassName()
@@ -131,10 +129,10 @@ std::string CEntity::GetEntityClassName()
 
 Vector3 CEntity::GetCameraPosition()
 {
-	return m.Read<Vector3>(m_pCSPlayerPawn + Offset::m_vecLastClipCameraPos);
+	return m.Read<Vector3>(m_pCSPlayerPawn + offset::m_vecLastClipCameraPos);
 }
 
 Vector2 CEntity::GetViewAngle()
 {
-	return m.Read<Vector2>(m.m_dwClientBaseAddr + Offset::dwViewAngles);
+	return m.Read<Vector2>(m.m_dwClientBaseAddr + offset::dwViewAngles);
 }
