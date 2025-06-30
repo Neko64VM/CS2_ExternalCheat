@@ -1,5 +1,7 @@
 #include "GameSDK.h"
 
+CGameAddress g_game;
+
 bool Vec2_Empty(const Vector2& value)
 {
     return value == Vector2();
