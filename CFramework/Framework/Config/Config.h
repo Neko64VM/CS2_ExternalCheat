@@ -11,7 +11,7 @@
 using json = nlohmann::json;
 
 // Global vars
-struct GlobalVars
+struct Global
 {
     // System
     bool bShowMenu{ false };
@@ -92,5 +92,5 @@ public:
 };
 
 extern std::atomic<bool> g_ApplicationActive;
-extern GlobalVars g;
+extern Global g;
 extern ConfigManager config;

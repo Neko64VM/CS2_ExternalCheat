@@ -2,7 +2,7 @@
 #include <shlobj.h>
 #include "Config.h"
 
-GlobalVars g;
+Global g;
 ConfigManager config;
 std::atomic<bool> g_ApplicationActive(true);
 
