@@ -9,14 +9,14 @@ void CFramework::UpdateList()
         std::this_thread::sleep_for(std::chrono::milliseconds(333));
 
         // EntityList found?
-        auto pEntityList = m.Read<uintptr_t>(m.m_dwClientBaseAddr + offset.dwEntityList);
+        auto pEntityList = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwEntityList);
 
         if (pEntityList == NULL)
             continue;
 
         // Get LocalPlayer
         CEntity local = CEntity();
-        local.m_address = m.Read<uintptr_t>(m.m_dwClientBaseAddr + offset.dwLocalPlayerController);
+        local.m_address = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwLocalPlayerController);
 
         if (!local.IsAlive())
             continue;
@@ -27,16 +27,21 @@ void CFramework::UpdateList()
             continue;
 
         // C4
-        bool isC4Planted = m.Read<bool>(m.m_dwClientBaseAddr + offset.dwPlantedC4 - 0x8);
+        CC4 tC4 = CC4();
 
-        if (isC4Planted)
+        if (tC4.IsPlanted())
         {
-            uintptr_t pPlantedC4 = m.Read<uintptr_t>(m.m_dwClientBaseAddr + offset.dwPlantedC4);
+            uintptr_t pEntityC4 = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwPlantedC4);
 
-            if (pPlantedC4 != NULL)
+            if (pEntityC4 != NULL)
             {
-                std::lock_guard<std::mutex> lock(c4_mutex);
-                plantedC4 = m.Read<uintptr_t>(pPlantedC4);
+                tC4.m_address = m.Read<uintptr_t>(pEntityC4);
+
+                if (!Vec3_Empty(tC4.GetPosition()))
+                {
+                    std::lock_guard<std::mutex> lock(c4_mutex);
+                    entityC4 = tC4;
+                }
             }
         }
 
