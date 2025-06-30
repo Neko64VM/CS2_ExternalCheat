@@ -1,8 +1,13 @@
 #include "CFramework.h"
-
+#include <cmath>
 #define M_PI 3.14159265358979323846
 
 CEntity lastTarget = CEntity();
+
+bool InScreen(const BoundingBox* box)
+{
+    return !(box->top == 0 && box->bottom == 0 && box->left == 0 && box->right == 0);
+}
 
 void CFramework::RenderInfo()
 {
@@ -14,7 +19,7 @@ void CFramework::RenderInfo()
     {
         DrawCircle(Vector2((g.rcSize.right / 2.f), (g.rcSize.bottom / 2.f)), g.AimFOV, g.bRainbowFOV ? GenerateRainbow() : g.Color_AimFOV, 0.35f);
     }
-
+    
     // Crosshair
     if (g.CrosshairEnable)
     {
@@ -47,20 +52,20 @@ void CFramework::RenderESP()
     // Local, ViewMatrix
     CEntity local = CEntity();
     CEntity* pLocal = &local;
-    local.m_address = m.Read<uintptr_t>(m.m_dwClientBaseAddr + offset.dwLocalPlayerController);
-    uintptr_t entitylist = m.Read<uintptr_t>(m.m_dwClientBaseAddr + offset.dwEntityList);
+    local.m_address = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwLocalPlayerController);
+    uintptr_t entitylist = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwEntityList);
 
     if (!local.UpdateStaticData(entitylist))
         return;
     else if (!local.Update())
         return;
 
-    Matrix ViewMatrix = m.Read<Matrix>(m.m_dwClientBaseAddr + offset.dwViewMatrix);
+    Matrix ViewMatrix = m.Read<Matrix>(m.m_dwClientBaseAddr + g_game.dwViewMatrix);
 
     // Radar
     static Vector2 s_radar_size{ 250.f, 250.f };
     static Vector2 s_radar_pos{ 25.f, g.rcSize.bottom - (s_radar_size.y + 25.f) };
-    static Vector2 s_radar_center = { s_radar_pos.x + s_radar_size.x / 2.f, s_radar_pos.y + s_radar_size.y / 2.f };
+    static Vector2 s_radar_center{ s_radar_pos.x + s_radar_size.x / 2.f, s_radar_pos.y + s_radar_size.y / 2.f };
 
     if (g.ESP_Radar)
     {
@@ -71,34 +76,29 @@ void CFramework::RenderESP()
 
     // C4
     {
-        uintptr_t pC4 = GetC4Pointer();
+        CC4 pC4 = GetEntityC4();
+        Vector3 vecC4Origin = pC4.GetPosition();
 
-        if (pC4 != NULL)
+        if (!Vec3_Empty(vecC4Origin))
         {
-            float flC4Blow = m.Read<float>(pC4 + 0xFC0); // m_flC4Blow
-            uintptr_t GlobalVars = m.Read<uintptr_t>(m.m_dwClientBaseAddr + offset.dwGlobalVars);
+            float flC4Blow = pC4.GetC4Blow();
+            
+            uintptr_t GlobalVars = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwGlobalVars);
             float flCurrentTime = m.Read<float>(GlobalVars + 0x34);
-
-            uintptr_t node = m.Read<uintptr_t>(pC4 + Offset::m_pGameSceneNode);
-            Vector3 pos = m.Read<Vector3>(node + 0xD0);
-
-            //  m_vecPrevAbsOrigin = 0xD0; // Node->m_vecPrevAbsOrigin
 
             if (flCurrentTime <= flC4Blow)
             {
-                static const char* BombSiteNameList[]{ "A", "B" };
-                int BombSite = m.Read<int>(pC4 + 0xF94); // m_nBombSite _ 0-A / 1-B
-
                 float result = flC4Blow - flCurrentTime;
+
                 Vector2 vOut{};
-                
-                if (WorldToScreen(ViewMatrix, g.rcSize, pos, vOut))
+                if (WorldToScreen(ViewMatrix, g.rcSize, vecC4Origin, vOut))
                 {
                     std::string szC4 = "C4 [" + std::to_string((int)result) + "s]";
                     DrawCircleFilled(vOut, 2.f, ImColor(0.f, 1.f, 0.f, 1.f), 1.f);
 
-                    String(Vector2(vOut.x - (ImGui::CalcTextSize(szC4.c_str()).x / 2.f), vOut.y + 1.f), ImColor(0.f, 1.f, 0.f, 1.f), ImGui::GetFontSize(), szC4.c_str());
+                    // pC4.GetBombSite() == 0 ? "A" : "B";
 
+                    String(Vector2(vOut.x - (ImGui::CalcTextSize(szC4.c_str()).x / 2.f), vOut.y + 1.f), ImColor(0.f, 1.f, 0.f, 1.f), ImGui::GetFontSize(), szC4.c_str());
                 }
             }
         }
@@ -109,7 +109,9 @@ void CFramework::RenderESP()
     {
         CEntity* pEntity = &entity;
 
-        if (!pEntity->Update())
+        if (!pEntity->IsAlive())
+            continue;
+        else if (!pEntity->Update())
             continue;
 
         const float fDistance = ((pLocal->m_vOldOrigin - pEntity->m_vOldOrigin).Length() * 0.01905f);
@@ -117,138 +119,138 @@ void CFramework::RenderESP()
         if (g.ESP_MaxDistance < fDistance)
             continue;
 
-        BoundingBox bbox = pEntity->GetBoundingBoxData(ViewMatrix);
-
-        if (bbox.left == 0 && bbox.right == 0)
-            continue;
-
+        // Get Sizes
+        const BoundingBox bbox = pEntity->GetBoundingBoxData(ViewMatrix);
         const int Height = bbox.bottom - bbox.top;
         const int Width = bbox.right - bbox.left;
         const int Center = (bbox.right - bbox.left) / 2.f;
         const int bScale = (bbox.right - bbox.left) / 3.f;
 
-        // ToDo:
+        // ToDo
         bool visible = false;
 
         ImColor shadow_color = WithAlpha(g.Color_ESP_Shadow, g.m_flShadowAlpha); // color + alpha
         ImColor tempColor = pLocal->m_iTeamNum == pEntity->m_iTeamNum ? g.Color_ESP_Team : g.Color_ESP_Enemy;
        
-        if (pEntity->m_address == lastTarget.m_address) // aiming target
+        if (pEntity->m_address == lastTarget.m_address) // aiming target?
             tempColor = g.Color_ESP_AimTarget;
 
         ImColor visualColor = WithAlpha(tempColor, g.m_flGlobalAlpha);
 
-        // Line
-        if (g.bLine)
+        if (InScreen(&bbox))
         {
-            DrawLine(Vector2(g.rcSize.right / 2.f, g.rcSize.bottom), Vector2(bbox.right - (Width / 2), bbox.bottom), visualColor, g.m_flGlobalAlpha);
-        }
-
-        // Box
-        if (g.bBox)
-        {
-            // BoxFilled
-            if (g.bFilled)
-                RectFilled(bbox.left, bbox.top, bbox.right, bbox.bottom, shadow_color, g.m_flShadowAlpha);
-
-            /* Shadow
-            DrawLine(Vector2(bbox.left - 1, bbox.top - 1), Vector2(bbox.right + 2, bbox.top - 1), shadow_color);
-            DrawLine(Vector2(bbox.left - 1, bbox.top), Vector2(bbox.left - 1, bbox.bottom + 2), shadow_color);
-            DrawLine(Vector2(bbox.right + 1, bbox.top), Vector2(bbox.right + 1, bbox.bottom + 2), shadow_color);
-            DrawLine(Vector2(bbox.left - 1, bbox.bottom + 1), Vector2(bbox.right + 1, bbox.bottom + 1), shadow_color);
-            */
-
-            switch (g.ESP_BoxType)
+            // Line
+            if (g.bLine)
             {
-            case 0:
-                DrawBox(bbox.right, bbox.left, bbox.top, bbox.bottom, visualColor);
-                break;
-            case 1:
-                DrawLine(Vector2(bbox.left, bbox.top), Vector2(bbox.left + bScale, bbox.top), visualColor); // Top
-                DrawLine(Vector2(bbox.right, bbox.top), Vector2(bbox.right - bScale, bbox.top), visualColor);
-                DrawLine(Vector2(bbox.left, bbox.top), Vector2(bbox.left, bbox.top + bScale), visualColor); // Left
-                DrawLine(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left, bbox.bottom - bScale), visualColor);
-                DrawLine(Vector2(bbox.right, bbox.top), Vector2(bbox.right, bbox.top + bScale), visualColor); // Right
-                DrawLine(Vector2(bbox.right, bbox.bottom), Vector2(bbox.right, bbox.bottom - bScale), visualColor);
-                DrawLine(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left + bScale, bbox.bottom), visualColor); // Bottom
-                DrawLine(Vector2(bbox.right + 1, bbox.bottom), Vector2(bbox.right - bScale, bbox.bottom), visualColor);
-                break;
+                DrawLine(Vector2(g.rcSize.right / 2.f, g.rcSize.bottom), Vector2(bbox.right - (Width / 2), bbox.bottom), visualColor, g.m_flGlobalAlpha);
             }
-        }
 
-        // Skeleton
-        if (g.bSkeleton)
-        {
-             CSkeletonArray bArray = pEntity->GetBoneList();
+            // Box
+            if (g.bBox)
+            {
+                // BoxFilled
+                if (g.bFilled)
+                    RectFilled(bbox.left, bbox.top, bbox.right, bbox.bottom, shadow_color, g.m_flShadowAlpha);
 
-             // 頭の円をレンダリング
-             Vector2 pHead, pNeck;
-             if (!WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[BONE_HEAD].position, pHead) ||
-                 !WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[BONE_NECK].position, pNeck))
-                 continue;
+                /* Shadow
+                DrawLine(Vector2(bbox.left - 1, bbox.top - 1), Vector2(bbox.right + 2, bbox.top - 1), shadow_color);
+                DrawLine(Vector2(bbox.left - 1, bbox.top), Vector2(bbox.left - 1, bbox.bottom + 2), shadow_color);
+                DrawLine(Vector2(bbox.right + 1, bbox.top), Vector2(bbox.right + 1, bbox.bottom + 2), shadow_color);
+                DrawLine(Vector2(bbox.left - 1, bbox.bottom + 1), Vector2(bbox.right + 1, bbox.bottom + 1), shadow_color);
+                */
 
-             DrawCircle(pHead, (pNeck.y - pHead.y) * 1.25, visualColor, g.m_flGlobalAlpha);
+                switch (g.ESP_BoxType)
+                {
+                case 0:
+                    DrawBox(bbox.right, bbox.left, bbox.top, bbox.bottom, visualColor);
+                    break;
+                case 1:
+                    DrawLine(Vector2(bbox.left, bbox.top), Vector2(bbox.left + bScale, bbox.top), visualColor); // Top
+                    DrawLine(Vector2(bbox.right, bbox.top), Vector2(bbox.right - bScale, bbox.top), visualColor);
+                    DrawLine(Vector2(bbox.left, bbox.top), Vector2(bbox.left, bbox.top + bScale), visualColor); // Left
+                    DrawLine(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left, bbox.bottom - bScale), visualColor);
+                    DrawLine(Vector2(bbox.right, bbox.top), Vector2(bbox.right, bbox.top + bScale), visualColor); // Right
+                    DrawLine(Vector2(bbox.right, bbox.bottom), Vector2(bbox.right, bbox.bottom - bScale), visualColor);
+                    DrawLine(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left + bScale, bbox.bottom), visualColor); // Bottom
+                    DrawLine(Vector2(bbox.right + 1, bbox.bottom), Vector2(bbox.right - bScale, bbox.bottom), visualColor);
+                    break;
+                }
+            }
 
-             // 線を引くためのペアを作成する
-             const Vector3 skeleton_list[][2] = {
-                 { bArray.bone[BONE_NECK].position, bArray.bone[BONE_HIP].position },
-                 { bArray.bone[BONE_NECK].position, bArray.bone[BONE_LEFT_SHOULDER].position },
-                 { bArray.bone[BONE_LEFT_SHOULDER].position, bArray.bone[BONE_LEFT_ARM].position },
-                 { bArray.bone[BONE_LEFT_ARM].position, bArray.bone[BONE_LEFT_HAND].position },
-                 { bArray.bone[BONE_NECK].position, bArray.bone[BONE_RIGHT_SHOULDER].position },
-                 { bArray.bone[BONE_RIGHT_SHOULDER].position, bArray.bone[BONE_RIGHT_ARM].position },
-                 { bArray.bone[BONE_RIGHT_ARM].position, bArray.bone[BONE_RIGHT_HAND].position },
-                 { bArray.bone[BONE_HIP].position, bArray.bone[BONE_LEFT_KNEE].position },
-                 { bArray.bone[BONE_LEFT_KNEE].position, bArray.bone[BONE_LEFT_FEET].position },
-                 { bArray.bone[BONE_HIP].position, bArray.bone[BONE_RIGHT_KNEE].position },
-                 { bArray.bone[BONE_RIGHT_KNEE].position, bArray.bone[BONE_RIGHT_FEET].position }
-             };
+            // Skeleton
+            if (g.bSkeleton)
+            {
+                CSkeletonArray bArray = pEntity->GetBoneList();
 
-             // WorldToScreenを行い各ペアをレンダリングする.
-             for (int j = 0; j < 11; j++)
-             {
-                 Vector2 vOut0{}, vOut1{};
-                 if (!WorldToScreen(ViewMatrix, g.rcSize, skeleton_list[j][0], vOut0) ||
-                     !WorldToScreen(ViewMatrix, g.rcSize, skeleton_list[j][1], vOut1))
-                     break;
+                // レンダリング
+                Vector2 pHead{}, pNeck{};
+                if (WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[BONE_HEAD].position, pHead) && WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[BONE_NECK].position, pNeck))
+                {
+                    // 頭の円
+                    DrawCircle(pHead, (pNeck.y - pHead.y) * 1.25, visualColor, g.m_flGlobalAlpha);
 
-                 DrawLine(vOut0, vOut1, visualColor);
-             }
-        }
+                    // 線を引くためのペアを作成する
+                    const Vector3 skeleton_list[][2] = {
+                        { bArray.bone[BONE_NECK].position, bArray.bone[BONE_HIP].position },
+                        { bArray.bone[BONE_NECK].position, bArray.bone[BONE_LEFT_SHOULDER].position },
+                        { bArray.bone[BONE_LEFT_SHOULDER].position, bArray.bone[BONE_LEFT_ARM].position },
+                        { bArray.bone[BONE_LEFT_ARM].position, bArray.bone[BONE_LEFT_HAND].position },
+                        { bArray.bone[BONE_NECK].position, bArray.bone[BONE_RIGHT_SHOULDER].position },
+                        { bArray.bone[BONE_RIGHT_SHOULDER].position, bArray.bone[BONE_RIGHT_ARM].position },
+                        { bArray.bone[BONE_RIGHT_ARM].position, bArray.bone[BONE_RIGHT_HAND].position },
+                        { bArray.bone[BONE_HIP].position, bArray.bone[BONE_LEFT_KNEE].position },
+                        { bArray.bone[BONE_LEFT_KNEE].position, bArray.bone[BONE_LEFT_FEET].position },
+                        { bArray.bone[BONE_HIP].position, bArray.bone[BONE_RIGHT_KNEE].position },
+                        { bArray.bone[BONE_RIGHT_KNEE].position, bArray.bone[BONE_RIGHT_FEET].position }
+                    };
 
-        // Healthbar
-        if (g.bHealth)
-        {
-            HealthBar(bbox.left - 3, bbox.bottom + 1, 1, -Height - 1, pEntity->m_iHealth, pEntity->m_iMaxHealth, shadow_color, g.m_flGlobalAlpha);
-        }
+                    // WorldToScreenを行い各ペアをレンダリングする.
+                    for (int j = 0; j < 11; j++)
+                    {
+                        Vector2 vOut0{}, vOut1{};
+                        if (!WorldToScreen(ViewMatrix, g.rcSize, skeleton_list[j][0], vOut0) ||
+                            !WorldToScreen(ViewMatrix, g.rcSize, skeleton_list[j][1], vOut1))
+                            break;
 
-        // Name
-        if (g.bName)
-        {
-            StringEx(Vector2(bbox.right - Center - (ImGui::CalcTextSize(pEntity->m_szPlayerName.c_str()).x / 2.f), bbox.top - ImGui::GetFontSize()), shadow_color, g.m_flGlobalAlpha, ImGui::GetFontSize(), pEntity->m_szPlayerName.c_str());
-        }
-        
-        // Distance & Weapon
-        if (g.bDistance || g.bWeapon)
-        {
-            std::string szResult{};
+                        DrawLine(vOut0, vOut1, visualColor);
+                    }
+                }
+            }
 
-            if (g.bDistance)
-                szResult += "[ " + std::to_string((int)fDistance) + "m ]";
+            // Healthbar
+            if (g.bHealth)
+            {
+                HealthBar(bbox.left - 3, bbox.bottom + 1, 1, -Height - 1, pEntity->m_iHealth, pEntity->m_iMaxHealth, shadow_color, g.m_flGlobalAlpha);
+            }
 
-            if (g.bWeapon)
-                szResult += " " + pEntity->m_szWeaponName;
+            // Name
+            if (g.bName)
+            {
+                StringEx(Vector2(bbox.right - Center - (ImGui::CalcTextSize(pEntity->m_szPlayerName.c_str()).x / 2.f), bbox.top - ImGui::GetFontSize()), shadow_color, g.m_flGlobalAlpha, ImGui::GetFontSize(), pEntity->m_szPlayerName.c_str());
+            }
 
-            // Rendering
-            if (g.bDistance || g.bWeapon && szResult.size() > 0)
-                StringEx(Vector2(bbox.right - Center - (ImGui::CalcTextSize(szResult.c_str()).x / 2.f), bbox.bottom + 1), shadow_color, g.m_flGlobalAlpha, ImGui::GetFontSize(), szResult.c_str());
+            // Distance & Weapon
+            if (g.bDistance || g.bWeapon)
+            {
+                std::string szResult{};
+
+                if (g.bDistance)
+                    szResult += "[ " + std::to_string((int)fDistance) + "m ]";
+
+                if (g.bWeapon)
+                    szResult += " " + pEntity->m_szWeaponName;
+
+                // Rendering
+                if (g.bDistance || g.bWeapon && szResult.size() > 0)
+                    StringEx(Vector2(bbox.right - Center - (ImGui::CalcTextSize(szResult.c_str()).x / 2.f), bbox.bottom + 1), shadow_color, g.m_flGlobalAlpha, ImGui::GetFontSize(), szResult.c_str());
+            }
         }
 
         // 2D Radar
         if (g.ESP_Radar)
         {
-            Vector3 delta = (pEntity->m_vOldOrigin - pLocal->m_vOldOrigin) * -1;
-            float yaw = pLocal->GetViewAngle().y * (M_PI / 180.f);
+            Vector3 delta = pEntity->m_vOldOrigin - pLocal->m_vOldOrigin;
+            float yaw = pLocal->GetViewAngle().y * (M_PI / 180.f); // ToRadian
             float cosYaw = cosf(yaw);
             float sinYaw = sinf(yaw);
 
@@ -258,52 +260,57 @@ void CFramework::RenderESP()
             };
 
             rotated /= g.ESP_RadarScale;
+            rotated *= -1.f;
             rotated += s_radar_center;
+            rotated.x = std::clamp(rotated.x, s_radar_pos.x, s_radar_pos.x + s_radar_size.x);
+            rotated.y = std::clamp(rotated.y, s_radar_pos.y, s_radar_pos.y + s_radar_size.y);
 
             DrawCircleFilled(rotated, 3.f, visualColor, 1.f);
         }
 
         // AimBot
-        // 多分FOV外の敵も部分的に狙ってるので要修正
-        if (g.AimBotEnable && pLocal->m_iTeamNum != pEntity->m_iTeamNum)
+        if (InScreen(&bbox))
         {
-            if (fDistance > g.AimMaxDistance)
-                continue;
-
-            for (int j = 0; j < 32; j++)
+            if (g.AimBotEnable && pLocal->m_iTeamNum != pEntity->m_iTeamNum)
             {
-                CSkeletonArray bArray = pEntity->GetBoneList();
+                if (fDistance > g.AimMaxDistance)
+                    continue;
 
-                Vector2 BoneScreen{};
-                if (!WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[j].position, BoneScreen))
-                    break;
-
-                // In FOV?
-                FOV = abs((ScreenMiddle - BoneScreen).Length());
-
-                if (FOV < g.AimFOV)
+                for (int j = 0; j < 32; j++)
                 {
-                    switch (g.AimMode)
+                    CSkeletonArray bArray = pEntity->GetBoneList();
+
+                    Vector2 BoneScreen{};
+                    if (!WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[j].position, BoneScreen))
+                        break;
+
+                    // In FOV?
+                    FOV = abs((ScreenMiddle - BoneScreen).Length());
+
+                    if (FOV < g.AimFOV)
                     {
-                    case 0: // Crosshair
-                        if (MinFov > FOV) {
-                            if (target.m_address == NULL || MinDistance > fDistance)
-                            {
+                        switch (g.AimMode)
+                        {
+                        case 0: // Crosshair
+                            if (MinFov > FOV) {
+                                if (target.m_address == NULL || MinDistance > fDistance)
+                                {
+                                    target = entity;
+                                    MinFov = FOV;
+                                    MinDistance = fDistance;
+                                }
+                            }
+                            break;
+                        case 1: // Game Distance
+                            if (MinDistance > fDistance) {
                                 target = entity;
-                                MinFov = FOV;
                                 MinDistance = fDistance;
                             }
+                            break;
                         }
-                        break;
-                    case 1: // Game Distance
-                        if (MinDistance > fDistance) {
-                            target = entity;
-                            MinDistance = fDistance;
-                        }
+
                         break;
                     }
-
-                    break;
                 }
             }
         }
@@ -331,7 +338,7 @@ void CFramework::RenderESP()
         NormalizeAngles(SmoothedAngle);
 
         if (!Vec2_Empty(SmoothedAngle))
-            m.Write<Vector2>(m.m_dwClientBaseAddr + offset.dwViewAngles, SmoothedAngle);
+            m.Write<Vector2>(m.m_dwClientBaseAddr + g_game.dwViewAngles, SmoothedAngle);
 
         lastTarget = target;
     }
