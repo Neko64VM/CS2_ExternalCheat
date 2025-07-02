@@ -41,6 +41,8 @@ public:
 	MODULEINFO GetModuleInfo(const std::string moduleName);
 	uintptr_t FindPattern(const std::vector<uint8_t>& read_data, const uintptr_t baseAddress, const std::string pattern, int offset, int extra);
 
+	uintptr_t FindPattern_M(const std::vector<uint8_t>& read_data, const uintptr_t baseAddress, const std::string pattern, int offset, int extra);
+
 	template <typename T>
 	constexpr const T Read(const uintptr_t& address) const noexcept
 	{

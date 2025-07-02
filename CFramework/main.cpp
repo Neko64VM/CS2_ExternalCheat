@@ -44,42 +44,8 @@ bool CGameAddress::InitOffset()
 	return true;
 }
 
-void Overlay::OverlayUserFunction()
+bool CFramework::Init()
 {
-	cheat->RenderInfo();
-
-	if (g.VisualEnable)
-		cheat->RenderESP();
-
-	if (g.bShowMenu)
-		cheat->RenderMenu();
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000 / g.iMaxFramerate));
-}
-
-// DEBUG時にはコンソールウィンドウを表示する
-#if _DEBUG
-int main()
-#else 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-#endif
-{
-	// プロセスに接続する
-	if (!m.AttachProcess("cs2.exe", InitializeMode::PROCESS)) // 詳細は Framework/Memory/Memory.h を参照
-		return 1;
-
-	// Overlay
-	if (!overlay->InitOverlay("cs2.exe", InitializeMode::PROCESS))
-		return 2;
-
-	// ConfigSystem
-	if (!config.InitConfigSystem("NekoHack", "CounterStrike_2")) // この場合、%AppData%\Local\NekoHack\CS2 になる。
-		return 3;
-
-	// Offset Init (Pattern scan
-	if (!g_game.InitOffset())
-		return 4;
-
 	// ImGui Style
 	ImGuiStyle& style = ImGui::GetStyle();
 
@@ -141,8 +107,51 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImFontConfig icons_config;
 	icons_config.MergeMode = true;
 	icons_config.GlyphOffset.y = 2.f;
-	cheat->icon = io.Fonts->AddFontFromMemoryCompressedTTF(FA_compressed_data, FA_compressed_size, 16.f, &icons_config, icons_ranges);
+	icon = io.Fonts->AddFontFromMemoryCompressedTTF(FA_compressed_data, FA_compressed_size, 16.f, &icons_config, icons_ranges);
 	io.Fonts->Build();
+
+	return true;
+}
+
+void Overlay::OverlayUserFunction()
+{
+	cheat->RenderInfo();
+
+	if (g.VisualEnable)
+		cheat->RenderESP();
+
+	if (g.bShowMenu)
+		cheat->RenderMenu();
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000 / g.iMaxFramerate));
+}
+
+// DEBUG時にはコンソールウィンドウを表示する
+#if _DEBUG
+int main()
+#else 
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+#endif
+{
+	// プロセスに接続する
+	if (!m.AttachProcess("cs2.exe", InitializeMode::PROCESS)) // 詳細は Framework/Memory/Memory.h を参照
+		return 1;
+
+	// Offset Init (Pattern scan
+	if (!g_game.InitOffset())
+		return 2;
+
+	// Overlay
+	if (!overlay->InitOverlay("cs2.exe", InitializeMode::PROCESS))
+		return 3;
+
+	// ConfigSystem
+	if (!config.InitConfigSystem("NekoHack", "CounterStrike_2")) // この場合、%AppData%\Local\NekoHack\CS2 になる。
+		return 4;
+
+	// CFramework
+	if (!cheat->Init())
+		return 5;
 
 	// スレッドを作成
 	std::thread([&]() { cheat->UpdateList(); }).detach(); // ESP/AIM用にプレイヤーのデータをキャッシュする

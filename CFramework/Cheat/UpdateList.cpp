@@ -1,12 +1,12 @@
 #include "CFramework.h"
 
-constexpr int ReadCount = 64;
+constexpr int ReadCount{ 64 };
 
 void CFramework::UpdateList()
 {
     while (g_ApplicationActive)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(333));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         // EntityList found?
         auto pEntityList = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwEntityList);
@@ -14,17 +14,21 @@ void CFramework::UpdateList()
         if (pEntityList == NULL)
             continue;
 
-        // Get LocalPlayer
         CEntity local = CEntity();
         local.m_address = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwLocalPlayerController);
 
+        // Optional
         if (!local.IsAlive())
             continue;
 
-        if (!local.UpdateStaticData(pEntityList))
-            continue;
-        else if (!local.Update())
-            continue;
+        // Update LocalPlayer
+        if (local.UpdateStaticData(pEntityList))
+        {
+            if (local.Update()) {
+                std::lock_guard<std::mutex> lock(m_mtxLocal);
+                localplayer = local;
+            }
+        }
 
         // C4
         CC4 tC4 = CC4();
@@ -45,9 +49,9 @@ void CFramework::UpdateList()
             }
         }
 
+        // Player
         std::vector<CEntity> list_result{};
 
-        // Loop
         for (int i = 0; i < ReadCount; i++)
         {
             uintptr_t entity_entry = m.Read<uintptr_t>(pEntityList + (0x8 * (i & 0x7FFF) >> 9) + 0x10);

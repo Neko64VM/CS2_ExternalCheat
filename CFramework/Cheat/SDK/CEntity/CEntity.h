@@ -16,7 +16,7 @@ struct alignas(0x20) CBone {
 };
 
 struct CSkeletonArray {
-	CBone bone[32]{};
+	CBone bone[28]{};
 };
 
 class CEntity

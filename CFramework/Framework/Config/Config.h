@@ -53,7 +53,7 @@ struct Global
     bool bDistance{ true };
     bool bName{ true };
     bool bWeapon{ true };
-    float ESP_RadarScale{ 12.f };
+    float ESP_RadarScale{ 11.f };
     int ESP_BoxType{ 1 };
     int ESP_MaxDistance{ 100 };
 

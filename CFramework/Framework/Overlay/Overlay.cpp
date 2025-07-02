@@ -53,6 +53,8 @@ bool Overlay::CreateOverlay()
 
 void Overlay::OverlayLoop()
 {
+    static const auto frameDuration = std::chrono::milliseconds(1000 / g.iMaxFramerate);
+
     while (g_ApplicationActive)
     {
         MSG msg;

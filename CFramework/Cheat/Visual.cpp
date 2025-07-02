@@ -1,9 +1,12 @@
 #include "CFramework.h"
 #include <cmath>
+
 #define M_PI 3.14159265358979323846
 
 CEntity lastTarget = CEntity();
+auto g_gui = std::make_unique<Renderer>();
 
+// 厳密には違うけどね
 bool InScreen(const BoundingBox* box)
 {
     return !(box->top == 0 && box->bottom == 0 && box->left == 0 && box->right == 0);
@@ -12,12 +15,11 @@ bool InScreen(const BoundingBox* box)
 void CFramework::RenderInfo()
 {
     // FPS
-    String(Vector2(3.f, 3.f), TEXT_COLOR, 1.f, std::to_string((int)ImGui::GetIO().Framerate).c_str());
+    g_gui->String(Vector2(3.f, 3.f), g_gui->TEXT_COLOR, 1.f, std::to_string((int)ImGui::GetIO().Framerate).c_str());
 
     // FOV Circle
-    if (g.AimBotEnable && g.bShowFOV)
-    {
-        DrawCircle(Vector2((g.rcSize.right / 2.f), (g.rcSize.bottom / 2.f)), g.AimFOV, g.bRainbowFOV ? GenerateRainbow() : g.Color_AimFOV, 0.35f);
+    if (g.AimBotEnable && g.bShowFOV) {
+        g_gui->CircleA(Vector2((g.rcSize.right / 2.f), (g.rcSize.bottom / 2.f)), g.AimFOV, g.bRainbowFOV ? g_gui->GenerateRainbow() : g.Color_AimFOV, 0.4f);
     }
     
     // Crosshair
@@ -27,14 +29,14 @@ void CFramework::RenderInfo()
         {
         case 0: {
             ImVec2 Center = ImVec2(g.rcSize.right / 2, g.rcSize.bottom / 2);
-            ImColor crosshair_col = WithAlpha(g.Color_Crosshair, g.m_flGlobalAlpha);
+            ImColor crosshair_col = g_gui->ApplyAlpha(g.Color_Crosshair, g.m_flGlobalAlpha);
 
-            DrawLine(Vector2(Center.x - g.CrosshairSize, Center.y), Vector2((Center.x + g.CrosshairSize) + 1, Center.y), crosshair_col, 1.f);
-            DrawLine(Vector2(Center.x, Center.y - g.CrosshairSize), Vector2(Center.x, (Center.y + g.CrosshairSize) + 1), crosshair_col, 1.f);
+            g_gui->Line(Vector2(Center.x - g.CrosshairSize, Center.y), Vector2((Center.x + g.CrosshairSize) + 1, Center.y), crosshair_col, 1.f);
+            g_gui->Line(Vector2(Center.x, Center.y - g.CrosshairSize), Vector2(Center.x, (Center.y + g.CrosshairSize) + 1), crosshair_col, 1.f);
         }   break;
         case 1:
-            DrawCircleFilled(Vector2(g.rcSize.right / 2.f, g.rcSize.bottom / 2.f), g.CrosshairSize + 1, ImColor(0.f, 0.f, 0.f, 1.f), 0.85f); // 0.85f == CrosshairAlpha
-            DrawCircleFilled(Vector2(g.rcSize.right / 2.f, g.rcSize.bottom / 2.f), g.CrosshairSize, g.Color_Crosshair, 0.85f);
+            g_gui->CircleFilled(Vector2(g.rcSize.right / 2.f, g.rcSize.bottom / 2.f), g.CrosshairSize + 1, ImColor(0.f, 0.f, 0.f, 1.f), 0.85f); // 0.85f == CrosshairAlpha
+            g_gui->CircleFilled(Vector2(g.rcSize.right / 2.f, g.rcSize.bottom / 2.f), g.CrosshairSize, g.Color_Crosshair, 0.85f);
             break;
         }
     }
@@ -47,31 +49,34 @@ void CFramework::RenderESP()
     float MinFov{ FLT_MAX };
     float MinDistance{ FLT_MAX };
     CEntity target = CEntity();
-    Vector2 ScreenMiddle{ g.rcSize.right / 2.f, g.rcSize.bottom / 2.f };
+    const Vector2 ScreenMiddle{ g.rcSize.right / 2.f, g.rcSize.bottom / 2.f };
 
-    // Local, ViewMatrix
-    CEntity local = CEntity();
-    CEntity* pLocal = &local;
-    local.m_address = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwLocalPlayerController);
-    uintptr_t entitylist = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwEntityList);
+    // Local
+    CEntity local = GetLocalPlayer();
 
-    if (!local.UpdateStaticData(entitylist))
-        return;
-    else if (!local.Update())
+    if (!local.Update())
         return;
 
+    // Update ViewMatrix
     Matrix ViewMatrix = m.Read<Matrix>(m.m_dwClientBaseAddr + g_game.dwViewMatrix);
 
-    // Radar
+    // Radar size and position
     static Vector2 s_radar_size{ 250.f, 250.f };
     static Vector2 s_radar_pos{ 25.f, g.rcSize.bottom - (s_radar_size.y + 25.f) };
     static Vector2 s_radar_center{ s_radar_pos.x + s_radar_size.x / 2.f, s_radar_pos.y + s_radar_size.y / 2.f };
 
+    // Radar frame
     if (g.ESP_Radar)
     {
-        DrawLine(Vector2(s_radar_center.x, s_radar_pos.y), Vector2(s_radar_center.x, s_radar_pos.y + s_radar_size.y), ImColor(1.f, 1.f, 1.f, 1.f), 1.f);
-        DrawLine(Vector2(s_radar_pos.x, s_radar_center.y), Vector2(s_radar_pos.x + s_radar_size.x, s_radar_center.y), ImColor(1.f, 1.f, 1.f, 1.f), 1.f);
-        DrawCircleFilled(s_radar_center, 3.f, ImColor(0.f, 0.65f, 1.f, 1.f), 1.f);
+        g_gui->Rect(Vector2(s_radar_pos), Vector2(s_radar_pos + s_radar_size), ImColor(1.f, 1.f, 1.f, 0.5f));
+        g_gui->Line(Vector2(s_radar_center.x, s_radar_pos.y), Vector2(s_radar_center.x, s_radar_pos.y + s_radar_size.y), ImColor(1.f, 1.f, 1.f, 0.5f), 1.f);
+        g_gui->Line(Vector2(s_radar_pos.x, s_radar_center.y), Vector2(s_radar_pos.x + s_radar_size.x, s_radar_center.y), ImColor(1.f, 1.f, 1.f, 0.5f), 1.f);
+        g_gui->CircleFilled(s_radar_center, 3.f, ImColor(0.f, 0.65f, 1.f, 1.f), 1.f);
+
+        // Circle
+        for (int r = 1; 3 > r; r++) {
+            g_gui->Circle(s_radar_center, 50.f * r, ImColor(1.f, 1.f, 1.f, 0.5f));
+        }
     }
 
     // C4
@@ -94,11 +99,11 @@ void CFramework::RenderESP()
                 if (WorldToScreen(ViewMatrix, g.rcSize, vecC4Origin, vOut))
                 {
                     std::string szC4 = "C4 [" + std::to_string((int)result) + "s]";
-                    DrawCircleFilled(vOut, 2.f, ImColor(0.f, 1.f, 0.f, 1.f), 1.f);
+                    g_gui->CircleFilled(vOut, 2.f, ImColor(0.f, 1.f, 0.f, 1.f), 1.f);
 
                     // pC4.GetBombSite() == 0 ? "A" : "B";
 
-                    String(Vector2(vOut.x - (ImGui::CalcTextSize(szC4.c_str()).x / 2.f), vOut.y + 1.f), ImColor(0.f, 1.f, 0.f, 1.f), ImGui::GetFontSize(), szC4.c_str());
+                    g_gui->String(Vector2(vOut.x - (ImGui::CalcTextSize(szC4.c_str()).x / 2.f), vOut.y + 1.f), ImColor(0.f, 1.f, 0.f, 1.f), ImGui::GetFontSize(), szC4.c_str());
                 }
             }
         }
@@ -107,42 +112,63 @@ void CFramework::RenderESP()
     // ESP Loop
     for (auto& entity : this->GetEntityList())
     {
-        CEntity* pEntity = &entity;
-
-        if (!pEntity->IsAlive())
-            continue;
-        else if (!pEntity->Update())
+        if (!entity.Update())
             continue;
 
-        const float fDistance = ((pLocal->m_vOldOrigin - pEntity->m_vOldOrigin).Length() * 0.01905f);
+        const float flDistance = ((local.m_vOldOrigin - entity.m_vOldOrigin).Length() * 0.01905f);
 
-        if (g.ESP_MaxDistance < fDistance)
+        if (g.ESP_MaxDistance < flDistance)
             continue;
-
-        // Get Sizes
-        const BoundingBox bbox = pEntity->GetBoundingBoxData(ViewMatrix);
-        const int Height = bbox.bottom - bbox.top;
-        const int Width = bbox.right - bbox.left;
-        const int Center = (bbox.right - bbox.left) / 2.f;
-        const int bScale = (bbox.right - bbox.left) / 3.f;
 
         // ToDo
         bool visible = false;
 
-        ImColor shadow_color = WithAlpha(g.Color_ESP_Shadow, g.m_flShadowAlpha); // color + alpha
-        ImColor tempColor = pLocal->m_iTeamNum == pEntity->m_iTeamNum ? g.Color_ESP_Team : g.Color_ESP_Enemy;
+        // Set color
+        ImColor shadow_color = g_gui->ApplyAlpha(g.Color_ESP_Shadow, g.m_flShadowAlpha); // color + alpha
+        ImColor tempColor = local.m_iTeamNum == entity.m_iTeamNum ? g.Color_ESP_Team : g.Color_ESP_Enemy;
        
-        if (pEntity->m_address == lastTarget.m_address) // aiming target?
+        if (entity.m_address == lastTarget.m_address) // aiming target?
             tempColor = g.Color_ESP_AimTarget;
 
-        ImColor visualColor = WithAlpha(tempColor, g.m_flGlobalAlpha);
+        ImColor visualColor = g_gui->ApplyAlpha(tempColor, g.m_flGlobalAlpha);
+
+        // 2D Radar
+        if (g.ESP_Radar)
+        {
+            Vector3 delta = entity.m_vOldOrigin - local.m_vOldOrigin;
+            float yaw = local.GetViewAngle().y * (M_PI / 180.f); // ToRadian
+            float cosYaw = cosf(yaw);
+            float sinYaw = sinf(yaw);
+
+            Vector2 rotated{
+                delta.y * cosYaw - delta.x * sinYaw,
+                delta.y * sinYaw + delta.x * cosYaw
+            };
+
+            rotated /= g.ESP_RadarScale;
+            rotated *= -1.f;
+            rotated += s_radar_center;
+            rotated.x = std::clamp(rotated.x, s_radar_pos.x, s_radar_pos.x + s_radar_size.x);
+            rotated.y = std::clamp(rotated.y, s_radar_pos.y, s_radar_pos.y + s_radar_size.y);
+
+            g_gui->CircleFilled(rotated, 3.f, visualColor, 1.f);
+        }
+
+        // Get Sizes #1
+        const BoundingBox bbox = entity.GetBoundingBoxData(ViewMatrix);
 
         if (InScreen(&bbox))
         {
+            // Get Sizes #2
+            const int Height = bbox.bottom - bbox.top;
+            const int Width = bbox.right - bbox.left;
+            const int Center = (bbox.right - bbox.left) / 2.f;
+            const int bScale = (bbox.right - bbox.left) / 3.f;
+
             // Line
             if (g.bLine)
             {
-                DrawLine(Vector2(g.rcSize.right / 2.f, g.rcSize.bottom), Vector2(bbox.right - (Width / 2), bbox.bottom), visualColor, g.m_flGlobalAlpha);
+                g_gui->Line(Vector2(g.rcSize.right / 2.f, g.rcSize.bottom), Vector2(bbox.right - (Width / 2), bbox.bottom), visualColor, g.m_flGlobalAlpha);
             }
 
             // Box
@@ -150,29 +176,22 @@ void CFramework::RenderESP()
             {
                 // BoxFilled
                 if (g.bFilled)
-                    RectFilled(bbox.left, bbox.top, bbox.right, bbox.bottom, shadow_color, g.m_flShadowAlpha);
-
-                /* Shadow
-                DrawLine(Vector2(bbox.left - 1, bbox.top - 1), Vector2(bbox.right + 2, bbox.top - 1), shadow_color);
-                DrawLine(Vector2(bbox.left - 1, bbox.top), Vector2(bbox.left - 1, bbox.bottom + 2), shadow_color);
-                DrawLine(Vector2(bbox.right + 1, bbox.top), Vector2(bbox.right + 1, bbox.bottom + 2), shadow_color);
-                DrawLine(Vector2(bbox.left - 1, bbox.bottom + 1), Vector2(bbox.right + 1, bbox.bottom + 1), shadow_color);
-                */
+                    g_gui->RectFilled(bbox.left, bbox.top, bbox.right, bbox.bottom, shadow_color, g.m_flShadowAlpha);
 
                 switch (g.ESP_BoxType)
                 {
                 case 0:
-                    DrawBox(bbox.right, bbox.left, bbox.top, bbox.bottom, visualColor);
+                    g_gui->Rect(Vector2(bbox.left, bbox.top), Vector2(bbox.right, bbox.bottom), visualColor);
                     break;
                 case 1:
-                    DrawLine(Vector2(bbox.left, bbox.top), Vector2(bbox.left + bScale, bbox.top), visualColor); // Top
-                    DrawLine(Vector2(bbox.right, bbox.top), Vector2(bbox.right - bScale, bbox.top), visualColor);
-                    DrawLine(Vector2(bbox.left, bbox.top), Vector2(bbox.left, bbox.top + bScale), visualColor); // Left
-                    DrawLine(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left, bbox.bottom - bScale), visualColor);
-                    DrawLine(Vector2(bbox.right, bbox.top), Vector2(bbox.right, bbox.top + bScale), visualColor); // Right
-                    DrawLine(Vector2(bbox.right, bbox.bottom), Vector2(bbox.right, bbox.bottom - bScale), visualColor);
-                    DrawLine(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left + bScale, bbox.bottom), visualColor); // Bottom
-                    DrawLine(Vector2(bbox.right + 1, bbox.bottom), Vector2(bbox.right - bScale, bbox.bottom), visualColor);
+                    g_gui->Line(Vector2(bbox.left, bbox.top), Vector2(bbox.left + bScale, bbox.top), visualColor); // Top
+                    g_gui->Line(Vector2(bbox.right, bbox.top), Vector2(bbox.right - bScale, bbox.top), visualColor);
+                    g_gui->Line(Vector2(bbox.left, bbox.top), Vector2(bbox.left, bbox.top + bScale), visualColor); // Left
+                    g_gui->Line(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left, bbox.bottom - bScale), visualColor);
+                    g_gui->Line(Vector2(bbox.right, bbox.top), Vector2(bbox.right, bbox.top + bScale), visualColor); // Right
+                    g_gui->Line(Vector2(bbox.right, bbox.bottom), Vector2(bbox.right, bbox.bottom - bScale), visualColor);
+                    g_gui->Line(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left + bScale, bbox.bottom), visualColor); // Bottom
+                    g_gui->Line(Vector2(bbox.right + 1, bbox.bottom), Vector2(bbox.right - bScale, bbox.bottom), visualColor);
                     break;
                 }
             }
@@ -180,14 +199,14 @@ void CFramework::RenderESP()
             // Skeleton
             if (g.bSkeleton)
             {
-                CSkeletonArray bArray = pEntity->GetBoneList();
+                CSkeletonArray bArray = entity.GetBoneList();
 
                 // レンダリング
                 Vector2 pHead{}, pNeck{};
                 if (WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[BONE_HEAD].position, pHead) && WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[BONE_NECK].position, pNeck))
                 {
                     // 頭の円
-                    DrawCircle(pHead, (pNeck.y - pHead.y) * 1.25, visualColor, g.m_flGlobalAlpha);
+                    g_gui->CircleA(pHead, (pNeck.y - pHead.y) * 1.25, visualColor, g.m_flGlobalAlpha);
 
                     // 線を引くためのペアを作成する
                     const Vector3 skeleton_list[][2] = {
@@ -212,7 +231,7 @@ void CFramework::RenderESP()
                             !WorldToScreen(ViewMatrix, g.rcSize, skeleton_list[j][1], vOut1))
                             break;
 
-                        DrawLine(vOut0, vOut1, visualColor);
+                        g_gui->Line(vOut0, vOut1, visualColor);
                     }
                 }
             }
@@ -220,13 +239,13 @@ void CFramework::RenderESP()
             // Healthbar
             if (g.bHealth)
             {
-                HealthBar(bbox.left - 3, bbox.bottom + 1, 1, -Height - 1, pEntity->m_iHealth, pEntity->m_iMaxHealth, shadow_color, g.m_flGlobalAlpha);
+                g_gui->HealthBar(bbox.left - 3, bbox.bottom + 1, 1, -Height - 1, entity.m_iHealth, entity.m_iMaxHealth, shadow_color, g.m_flGlobalAlpha);
             }
 
             // Name
             if (g.bName)
             {
-                StringEx(Vector2(bbox.right - Center - (ImGui::CalcTextSize(pEntity->m_szPlayerName.c_str()).x / 2.f), bbox.top - ImGui::GetFontSize()), shadow_color, g.m_flGlobalAlpha, ImGui::GetFontSize(), pEntity->m_szPlayerName.c_str());
+                g_gui->StringEx(Vector2(bbox.right - Center - (ImGui::CalcTextSize(entity.m_szPlayerName.c_str()).x / 2.f), bbox.top - ImGui::GetFontSize()), shadow_color, g.m_flGlobalAlpha, ImGui::GetFontSize(), entity.m_szPlayerName.c_str());
             }
 
             // Distance & Weapon
@@ -235,51 +254,26 @@ void CFramework::RenderESP()
                 std::string szResult{};
 
                 if (g.bDistance)
-                    szResult += "[ " + std::to_string((int)fDistance) + "m ]";
+                    szResult += "[ " + std::to_string((int)flDistance) + "m ]";
 
                 if (g.bWeapon)
-                    szResult += " " + pEntity->m_szWeaponName;
+                    szResult += " " + entity.m_szWeaponName;
 
                 // Rendering
                 if (g.bDistance || g.bWeapon && szResult.size() > 0)
-                    StringEx(Vector2(bbox.right - Center - (ImGui::CalcTextSize(szResult.c_str()).x / 2.f), bbox.bottom + 1), shadow_color, g.m_flGlobalAlpha, ImGui::GetFontSize(), szResult.c_str());
+                    g_gui->StringEx(Vector2(bbox.right - Center - (ImGui::CalcTextSize(szResult.c_str()).x / 2.f), bbox.bottom + 1), shadow_color, g.m_flGlobalAlpha, ImGui::GetFontSize(), szResult.c_str());
             }
-        }
 
-        // 2D Radar
-        if (g.ESP_Radar)
-        {
-            Vector3 delta = pEntity->m_vOldOrigin - pLocal->m_vOldOrigin;
-            float yaw = pLocal->GetViewAngle().y * (M_PI / 180.f); // ToRadian
-            float cosYaw = cosf(yaw);
-            float sinYaw = sinf(yaw);
-
-            Vector2 rotated{
-                delta.y * cosYaw - delta.x * sinYaw,
-                delta.y * sinYaw + delta.x * cosYaw
-            };
-
-            rotated /= g.ESP_RadarScale;
-            rotated *= -1.f;
-            rotated += s_radar_center;
-            rotated.x = std::clamp(rotated.x, s_radar_pos.x, s_radar_pos.x + s_radar_size.x);
-            rotated.y = std::clamp(rotated.y, s_radar_pos.y, s_radar_pos.y + s_radar_size.y);
-
-            DrawCircleFilled(rotated, 3.f, visualColor, 1.f);
-        }
-
-        // AimBot
-        if (InScreen(&bbox))
-        {
-            if (g.AimBotEnable && pLocal->m_iTeamNum != pEntity->m_iTeamNum)
+            // AimBot
+            if (g.AimBotEnable && local.m_iTeamNum != entity.m_iTeamNum)
             {
-                if (fDistance > g.AimMaxDistance)
+                if (flDistance > g.AimMaxDistance)
                     continue;
 
-                for (int j = 0; j < 32; j++)
-                {
-                    CSkeletonArray bArray = pEntity->GetBoneList();
+                CSkeletonArray bArray = entity.GetBoneList();
 
+                for (int j = 0; j < 28; j++)
+                {
                     Vector2 BoneScreen{};
                     if (!WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[j].position, BoneScreen))
                         break;
@@ -293,18 +287,18 @@ void CFramework::RenderESP()
                         {
                         case 0: // Crosshair
                             if (MinFov > FOV) {
-                                if (target.m_address == NULL || MinDistance > fDistance)
+                                if (target.m_address == NULL || MinDistance > flDistance)
                                 {
                                     target = entity;
                                     MinFov = FOV;
-                                    MinDistance = fDistance;
+                                    MinDistance = flDistance;
                                 }
                             }
                             break;
                         case 1: // Game Distance
-                            if (MinDistance > fDistance) {
+                            if (MinDistance > flDistance) {
                                 target = entity;
-                                MinDistance = fDistance;
+                                MinDistance = flDistance;
                             }
                             break;
                         }
@@ -319,6 +313,9 @@ void CFramework::RenderESP()
     // AimBot - ToDo
     if (target.m_address != NULL && AimBotKeyCheck(g.dwAimKey0, g.dwAimKey1, g.AimKeyMode))
     {
+        if (!target.IsAlive())
+            target = CEntity();
+
         int boneId = 1;
         switch (g.AimTargetBone)
         {
@@ -330,8 +327,8 @@ void CFramework::RenderESP()
             break;
         }
 
-        Vector2 Angle = CalcAngle(pLocal->GetCameraPosition(), target.GetBoneByID(boneId));
-        Vector2 ViewAngle = pLocal->GetViewAngle();
+        Vector2 Angle = CalcAngle(local.GetCameraPosition(), target.GetBoneByID(boneId));
+        Vector2 ViewAngle = local.GetViewAngle();
         Vector2 Delta = Angle - ViewAngle;
         NormalizeAngles(Delta);
         Vector2 SmoothedAngle = ViewAngle + (Delta / g.AimSmooth);
