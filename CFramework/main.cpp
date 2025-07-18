@@ -18,10 +18,15 @@ bool CGameAddress::InitOffset()
 	const MODULEINFO moduleInfo = m.GetModuleInfo("client.dll");
 	std::vector<uint8_t> bytes = m.ReadBytes((uintptr_t)moduleInfo.lpBaseOfDll, moduleInfo.SizeOfImage);
 
+	/* - ToDo
 	uintptr_t dwCSGOInput = m.FindPattern(bytes, m.m_dwClientBaseAddr, "/-- YOU NEED FIND AOB PATTERN --/", 3, 7);
 	printf("dwCSGOInput : 0x%llx\n", dwCSGOInput);
 
 	dwViewAngles = dwCSGOInput + 0x3D0;
+	printf("dwViewAngles : 0x%llx\n", dwViewAngles);
+	*/
+
+	dwViewAngles = offset::dwViewAngles;
 	printf("dwViewAngles : 0x%llx\n", dwViewAngles);
 
 	dwGlobalVars = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 15 ?? ?? ?? ?? 48 89 42", 3, 7);
