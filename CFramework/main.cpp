@@ -15,29 +15,29 @@ void Memory::SetBaseAddress()
 bool CGameAddress::InitOffset()
 {
 	// PatternScan.
-	auto moduleInfo = m.GetModuleInfo("client.dll");
+	const MODULEINFO moduleInfo = m.GetModuleInfo("client.dll");
 	std::vector<uint8_t> bytes = m.ReadBytes((uintptr_t)moduleInfo.lpBaseOfDll, moduleInfo.SizeOfImage);
 
-	//uintptr_t dwCSGOInput = m.FindPattern(bytes, m.m_dwClientBaseAddr, "", 3, 7);
-	//printf("dwCSGOInput : 0x%I64x\n", dwCSGOInput);
+	uintptr_t dwCSGOInput = m.FindPattern(bytes, m.m_dwClientBaseAddr, "/-- YOU NEED FIND AOB PATTERN --/", 3, 7);
+	printf("dwCSGOInput : 0x%llx\n", dwCSGOInput);
 
-	dwViewAngles = offset::dwViewAngles;
-	printf("dwViewAngles : 0x%I64x\n", dwViewAngles);
+	dwViewAngles = dwCSGOInput + 0x3D0;
+	printf("dwViewAngles : 0x%llx\n", dwViewAngles);
 
 	dwGlobalVars = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 15 ?? ?? ?? ?? 48 89 42", 3, 7);
-	printf("dwGlobalVars : 0x%I64x\n", dwGlobalVars);
+	printf("dwGlobalVars : 0x%llx\n", dwGlobalVars);
 
 	dwEntityList = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 35 ?? ?? ?? ?? 48 85 f6", 3, 7);
-	printf("dwEntityList : 0x%I64x\n", dwEntityList);
+	printf("dwEntityList : 0x%llx\n", dwEntityList);
 
 	dwLocalPlayerController = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 05 ?? ?? ?? ?? 8b 9e", 3, 7);
-	printf("dwLocalPlayerController : 0x%I64x\n", dwLocalPlayerController);
+	printf("dwLocalPlayerController : 0x%llx\n", dwLocalPlayerController);
 
 	dwViewMatrix = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8d 0d ?? ?? ?? ?? 48 c1 e0 06", 3, 7);
-	printf("dwViewMatrix : 0x%I64x\n", dwViewMatrix);
+	printf("dwViewMatrix : 0x%llx\n", dwViewMatrix);
 
 	dwPlantedC4 = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8b 15 ?? ?? ?? ?? 41 ff c0", 3, 7);
-	printf("dwPlantedC4 : 0x%I64x\n", dwPlantedC4);
+	printf("dwPlantedC4 : 0x%llx\n", dwPlantedC4);
 
 	bytes.clear();
 
