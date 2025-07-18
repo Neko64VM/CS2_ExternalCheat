@@ -12,6 +12,12 @@ bool InScreen(const BoundingBox* box)
     return !(box->top == 0 && box->bottom == 0 && box->left == 0 && box->right == 0);
 }
 
+// dev
+bool isColliding(const Vector2& a, const float radius_a, const Vector2& b, const float radius_b) {
+    float distance = (a - b).Length();
+    return distance <= (radius_a + radius_b);
+}
+
 void CFramework::RenderInfo()
 {
     // FPS
@@ -19,7 +25,9 @@ void CFramework::RenderInfo()
 
     // FOV Circle
     if (g.AimBotEnable && g.bShowFOV) {
-        g_gui->CircleA(Vector2((g.rcSize.right / 2.f), (g.rcSize.bottom / 2.f)), g.AimFOV, g.bRainbowFOV ? g_gui->GenerateRainbow() : g.Color_AimFOV, 0.4f);
+        ImColor rainbow{ g_gui->GenerateRainbow() };
+        rainbow.Value.w = 0.35f;
+        g_gui->Circle(Vector2((g.rcSize.right / 2.f), (g.rcSize.bottom / 2.f)), g.AimFOV, g.bRainbowFOV ? rainbow : g.Color_AimFOV);
     }
     
     // Crosshair
@@ -45,11 +53,10 @@ void CFramework::RenderInfo()
 void CFramework::RenderESP()
 {
     // AimBot
-    float FOV{ 0.f };
     float MinFov{ FLT_MAX };
     float MinDistance{ FLT_MAX };
     CEntity target = CEntity();
-    const Vector2 ScreenMiddle{ g.rcSize.right / 2.f, g.rcSize.bottom / 2.f };
+    Vector2 ScreenMiddle{ g.rcSize.right / 2.f, g.rcSize.bottom / 2.f };
 
     // Local
     CEntity local = GetLocalPlayer();
@@ -110,7 +117,7 @@ void CFramework::RenderESP()
     }
 
     // ESP Loop
-    for (auto& entity : this->GetEntityList())
+    for (auto& entity : GetEntityList())
     {
         if (!entity.Update())
             continue;
@@ -174,7 +181,7 @@ void CFramework::RenderESP()
             // Box
             if (g.bBox)
             {
-                // BoxFilled
+                // Filled
                 if (g.bFilled)
                     g_gui->RectFilled(bbox.left, bbox.top, bbox.right, bbox.bottom, shadow_color, g.m_flShadowAlpha);
 
@@ -184,14 +191,7 @@ void CFramework::RenderESP()
                     g_gui->Rect(Vector2(bbox.left, bbox.top), Vector2(bbox.right, bbox.bottom), visualColor);
                     break;
                 case 1:
-                    g_gui->Line(Vector2(bbox.left, bbox.top), Vector2(bbox.left + bScale, bbox.top), visualColor); // Top
-                    g_gui->Line(Vector2(bbox.right, bbox.top), Vector2(bbox.right - bScale, bbox.top), visualColor);
-                    g_gui->Line(Vector2(bbox.left, bbox.top), Vector2(bbox.left, bbox.top + bScale), visualColor); // Left
-                    g_gui->Line(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left, bbox.bottom - bScale), visualColor);
-                    g_gui->Line(Vector2(bbox.right, bbox.top), Vector2(bbox.right, bbox.top + bScale), visualColor); // Right
-                    g_gui->Line(Vector2(bbox.right, bbox.bottom), Vector2(bbox.right, bbox.bottom - bScale), visualColor);
-                    g_gui->Line(Vector2(bbox.left, bbox.bottom), Vector2(bbox.left + bScale, bbox.bottom), visualColor); // Bottom
-                    g_gui->Line(Vector2(bbox.right + 1, bbox.bottom), Vector2(bbox.right - bScale, bbox.bottom), visualColor);
+                    g_gui->CorneredBox(Vector2(bbox.left, bbox.top), Vector2(bbox.right, bbox.bottom), bScale, visualColor);
                     break;
                 }
             }
@@ -206,7 +206,7 @@ void CFramework::RenderESP()
                 if (WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[BONE_HEAD].position, pHead) && WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[BONE_NECK].position, pNeck))
                 {
                     // 頭の円
-                    g_gui->CircleA(pHead, (pNeck.y - pHead.y) * 1.25, visualColor, g.m_flGlobalAlpha);
+                    g_gui->Circle(pHead, (pNeck.y - pHead.y) * 1.25, visualColor);
 
                     // 線を引くためのペアを作成する
                     const Vector3 skeleton_list[][2] = {
@@ -270,42 +270,37 @@ void CFramework::RenderESP()
                 if (flDistance > g.AimMaxDistance)
                     continue;
 
-                CSkeletonArray bArray = entity.GetBoneList();
-
-                for (int j = 0; j < 28; j++)
+                int boneId = 1;
+                switch (g.AimTargetBone)
                 {
-                    Vector2 BoneScreen{};
-                    if (!WorldToScreen(ViewMatrix, g.rcSize, bArray.bone[j].position, BoneScreen))
-                        break;
+                case 0: boneId = BONE_HEAD; break;
+                case 1: boneId = BONE_NECK; break;
+                case 2: boneId = BONE_SPINE; break;
+                case 3: boneId = BONE_HIP; break;
+                default:
+                    break;
+                }
 
-                    // In FOV?
-                    FOV = abs((ScreenMiddle - BoneScreen).Length());
+                Vector2 BoneScreen{};
+                if (!WorldToScreen(ViewMatrix, g.rcSize, entity.GetBoneByID(BONE_HEAD), BoneScreen))
+                    break;
 
-                    if (FOV < g.AimFOV)
+                // In FOV?
+                float FOV = abs((ScreenMiddle - BoneScreen).Length());
+
+                if (FOV < g.AimFOV)
+                {
+                    if (target.m_address == NULL || MinFov > FOV)
                     {
-                        switch (g.AimMode)
-                        {
-                        case 0: // Crosshair
-                            if (MinFov > FOV) {
-                                if (target.m_address == NULL || MinDistance > flDistance)
-                                {
-                                    target = entity;
-                                    MinFov = FOV;
-                                    MinDistance = flDistance;
-                                }
-                            }
-                            break;
-                        case 1: // Game Distance
-                            if (MinDistance > flDistance) {
-                                target = entity;
-                                MinDistance = flDistance;
-                            }
-                            break;
-                        }
-
-                        break;
+                        target = entity;
+                        MinFov = FOV;
+                        MinDistance = flDistance;
                     }
                 }
+
+                // AIM target line
+                if (lastTarget.m_address == entity.m_address)
+                    g_gui->Line(ScreenMiddle, BoneScreen, ImColor(1.f, 0.f, 0.f, 1.f));
             }
         }
     }
@@ -313,8 +308,12 @@ void CFramework::RenderESP()
     // AimBot - ToDo
     if (target.m_address != NULL && AimBotKeyCheck(g.dwAimKey0, g.dwAimKey1, g.AimKeyMode))
     {
-        if (!target.IsAlive())
+        if (!target.IsAlive()) {
             target = CEntity();
+            lastTarget = CEntity();
+            return;
+        }
+            
 
         int boneId = 1;
         switch (g.AimTargetBone)

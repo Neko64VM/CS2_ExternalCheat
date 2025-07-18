@@ -271,17 +271,17 @@ void CFramework::RenderMenu()
         for (size_t j = 0; j < vec.size(); j++)
             FileList[j] = vec[j].c_str();
 
-        if (!g.GenerateFlag)
+        if (!g.bGenerateFlag)
         {
             if (ImGui::Button("Generate ConfigFile", ImVec2(ImGui::GetContentRegionAvail().x, 20.f)))
             {
-                g.GenerateFlag = true;
+                g.bGenerateFlag = true;
                 g.newConfigName.clear();
                 utils::EnableKeyboardHook();
             }
         }
 
-        if (g.GenerateFlag)
+        if (g.bGenerateFlag)
         {
             ImGui::TextColored(ImColor(1.f, 0.f, 0.f, 1.f), "New config name :");
             ImGui::SameLine();
@@ -293,14 +293,14 @@ void CFramework::RenderMenu()
                     std::thread([&]() { config.CreateNewConfig(g.newConfigName); }).join();
                 }
 
-                g.GenerateFlag = false;
+                g.bGenerateFlag = false;
                 g.newConfigName.clear();
                 utils::DisableKeyboardHook();
             }
             ImGui::SameLine();
             if (ImGui::Button("Cancel", ImVec2(ImGui::GetContentRegionAvail().x, 20.f)))
             {
-                g.GenerateFlag = false;
+                g.bGenerateFlag = false;
                 g.newConfigName.clear();
                 utils::DisableKeyboardHook();
             }
@@ -312,7 +312,7 @@ void CFramework::RenderMenu()
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::ListBox("##List", &FileNum, FileList, vec.size());
 
-        if (!g.GenerateFlag && !DeleteFlag)
+        if (!g.bGenerateFlag && !DeleteFlag)
         {
             // Button
             if (ImGui::Button("Save", ImVec2(ImGui::GetContentRegionAvail().x / 3.f - 4.f, 20.f))) {

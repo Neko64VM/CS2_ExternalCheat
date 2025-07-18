@@ -65,9 +65,9 @@ public:
     ImColor GenerateRainbow(float speed = 5.0f);
     void Line(const Vector2 p1, const Vector2 p2, ImColor color, float thickness = 1.f);
     void Circle(const Vector2 pos, float size, ImColor color);
-    void CircleA(const Vector2 pos, float size, ImColor color, float alpha);
     void CircleFilled(const Vector2 pos, float size, ImColor color, float alpha);
     void Rect(Vector2 min, Vector2 max, ImColor color);
+    void CorneredBox(Vector2 min, Vector2 max, int scale, ImColor color);
     void RectFilled(int x0, int y0, int x1, int y1, ImColor color);
     void RectFilled(int x0, int y0, int x1, int y1, ImColor color, float alpha);
     void HealthBar(int x, int y, int w, int h, int value, int v_max, ImColor shadow, float global_alpha);

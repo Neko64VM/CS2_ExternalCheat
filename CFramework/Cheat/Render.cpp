@@ -32,11 +32,6 @@ void Renderer::Circle(const Vector2 pos, float size, ImColor color)
     ImGui::GetBackgroundDrawList()->AddCircle(ToImVec2(pos), size, color);
 }
 
-void Renderer::CircleA(const Vector2 pos, float size, ImColor color, float alpha)
-{
-    ImGui::GetBackgroundDrawList()->AddCircle(ToImVec2(pos), size, ApplyAlpha(color, alpha));
-}
-
 void Renderer::CircleFilled(const Vector2 pos, float size, ImColor color, float alpha)
 {
     ImGui::GetBackgroundDrawList()->AddCircleFilled(ToImVec2(pos), size, ApplyAlpha(color, alpha));
@@ -45,6 +40,18 @@ void Renderer::CircleFilled(const Vector2 pos, float size, ImColor color, float 
 void Renderer::Rect(Vector2 min, Vector2 max, ImColor color)
 {
     ImGui::GetBackgroundDrawList()->AddRect(ToImVec2(Vector2(min)), ToImVec2(Vector2(max)), color);
+}
+
+void Renderer::CorneredBox(Vector2 min, Vector2 max, int scale, ImColor color)
+{
+    Line(Vector2(min.x, min.y), Vector2(min.x + scale, min.y), color); // Top
+    Line(Vector2(max.x, min.y), Vector2(max.x - scale, min.y), color);
+    Line(Vector2(min.x, min.y), Vector2(min.x, min.y + scale), color); // Left
+    Line(Vector2(min.x, max.y), Vector2(min.x, max.y - scale), color);
+    Line(Vector2(max.x, min.y), Vector2(max.x, min.y + scale), color); // Right
+    Line(Vector2(max.x, max.y), Vector2(max.x, max.y - scale), color);
+    Line(Vector2(min.x, max.y), Vector2(min.x + scale, max.y), color); // Bottom
+    Line(Vector2(max.x + 1, max.y), Vector2(max.x - scale, max.y), color);
 }
 
 void Renderer::RectFilled(int x0, int y0, int x1, int y1, ImColor color)
