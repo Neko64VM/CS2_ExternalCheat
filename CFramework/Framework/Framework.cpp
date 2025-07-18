@@ -14,7 +14,7 @@ namespace utils
 			KBDLLHOOKSTRUCT* pKey = (KBDLLHOOKSTRUCT*)lParam;
 			char ch = '\0';
 			if (pKey->vkCode == VK_BACK) {
-				if (!g.newConfigName.empty() && g.GenerateFlag) {
+				if (!g.newConfigName.empty() && g.bGenerateFlag) {
 					g.newConfigName.pop_back();
 				}
 			}
@@ -31,7 +31,7 @@ namespace utils
 				ch = ' ';
 			}
 
-			if (ch != '\0' && g.GenerateFlag) {
+			if (ch != '\0' && g.bGenerateFlag) {
 				g.newConfigName += ch;
 			}
 		}
