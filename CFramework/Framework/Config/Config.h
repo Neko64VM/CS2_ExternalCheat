@@ -18,17 +18,17 @@ struct Global
 
     // KeyBoard Hook/Input
     std::string newConfigName{};
-    bool GenerateFlag{ false };
+    bool bGenerateFlag{ false };
 
     // Window Data
-    HWND hGameWindow{};
+    HWND hGameWindow{ NULL };
     RECT rcSize{};
     POINT ptPoint{};
 
     // KeyData
     DWORD dwMenuKey{ VK_INSERT };
-    DWORD dwAimKey0{ VK_RBUTTON };
-    DWORD dwAimKey1{ VK_LBUTTON };
+    DWORD dwAimKey0{ VK_SHIFT };
+    DWORD dwAimKey1{ VK_CONTROL };
 
     // AimBot
     bool AimBotEnable{ false };
