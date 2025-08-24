@@ -6,7 +6,6 @@
 #include "../Framework/ImGui/Fonts/IconsFontAwesome6.h"
 #include "../Framework/ImGui/Custom.h"
 #include "SDK/CEntity/CEntity.h"
-#include "SDK/CC4/CC4.h"
 #include <mutex>
 #pragma comment(lib, "freetype.lib")
 
@@ -26,27 +25,19 @@ private:
 
     // Thread safe.
     std::mutex list_mutex;
-    std::mutex c4_mutex;
-
     std::mutex m_mtxLocal;
+
     CEntity localplayer;
+    std::vector<CEntity> EntityList{};
 
     CEntity GetLocalPlayer() {
         std::lock_guard<std::mutex> lock(m_mtxLocal);
         return localplayer;
     }
 
-    CC4 entityC4{};
-    std::vector<CEntity> EntityList{};
-
     std::vector<CEntity> GetEntityList() {
         std::lock_guard<std::mutex> lock(list_mutex);
         return EntityList;
-    }
-
-    CC4 GetEntityC4() {
-        std::lock_guard<std::mutex> lock(c4_mutex);
-        return entityC4;
     }
 
     bool AimBotKeyCheck(DWORD& AimKey0, DWORD& AimKey1, int AimKeyMode);
