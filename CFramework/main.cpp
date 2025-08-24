@@ -18,24 +18,13 @@ bool CGameAddress::InitOffset()
 	const MODULEINFO moduleInfo = m.GetModuleInfo("client.dll");
 	std::vector<uint8_t> bytes = m.ReadBytes((uintptr_t)moduleInfo.lpBaseOfDll, moduleInfo.SizeOfImage);
 
-	/* - ToDo
-	uintptr_t dwCSGOInput = m.FindPattern(bytes, m.m_dwClientBaseAddr, "/-- YOU NEED FIND AOB PATTERN --/", 3, 7);
-	printf("dwCSGOInput : 0x%llx\n", dwCSGOInput);
-
-	dwViewAngles = dwCSGOInput + 0x3D0;
-	printf("dwViewAngles : 0x%llx\n", dwViewAngles);
-	*/
-
-	dwViewAngles = offset::dwViewAngles;
-	printf("dwViewAngles : 0x%llx\n", dwViewAngles);
-
 	dwGlobalVars = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 15 ?? ?? ?? ?? 48 89 42", 3, 7);
 	printf("dwGlobalVars : 0x%llx\n", dwGlobalVars);
 
 	dwEntityList = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 35 ?? ?? ?? ?? 48 85 f6", 3, 7);
 	printf("dwEntityList : 0x%llx\n", dwEntityList);
 
-	dwLocalPlayerController = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 05 ?? ?? ?? ?? 8b 9e", 3, 7);
+	dwLocalPlayerController = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8b 05 ?? ?? ?? ?? 41 89 be", 3, 7);
 	printf("dwLocalPlayerController : 0x%llx\n", dwLocalPlayerController);
 
 	dwViewMatrix = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8d 0d ?? ?? ?? ?? 48 c1 e0 06", 3, 7);
@@ -122,7 +111,7 @@ void Overlay::OverlayUserFunction()
 {
 	cheat->RenderInfo();
 
-	if (g.VisualEnable)
+	if (g.bVisualEnable)
 		cheat->RenderESP();
 
 	if (g.bShowMenu)
