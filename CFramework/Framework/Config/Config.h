@@ -31,20 +31,20 @@ struct Global
     DWORD dwAimKey1{ VK_CONTROL };
 
     // AimBot
-    bool AimBotEnable{ false };
+    bool bAimBotEnable{ false };
     bool bShowFOV{ true };
     bool bRainbowFOV{ false };
-    int AimFOV{ 40 };
-    float AimSmooth{ 12.5f };
-    int AimMode{ 0 };
-    int AimKeyMode{ 2 }; // None, and, or
-    int AimTargetBone{ 1 };
-    int AimMaxDistance{ 25 };
+    int iAimFov{ 40 };
+    float flAimSmooth{ 12.5f };
+    int iAimMode{ 0 };
+    int iAimKeyMode{ 2 }; // None, and, or
+    int iAimTargetBone{ 1 };
+    int iAimMaxDistance{ 25 };
 
     // Visual
-    bool VisualEnable{ true };
-    bool ESP_Radar{ true };
-    bool ESP_Team{ false };
+    bool bVisualEnable{ true };
+    bool bShowRadar{ true };
+    bool bShowTeam{ false };
     bool bBox{ true };
     bool bFilled{ false };
     bool bLine{ false };
@@ -53,12 +53,12 @@ struct Global
     bool bDistance{ true };
     bool bName{ true };
     bool bWeapon{ true };
-    float ESP_RadarScale{ 11.f };
-    int ESP_BoxType{ 1 };
-    int ESP_MaxDistance{ 100 };
+    float flRadarScale{ 11.f };
+    int iBoxType{ 1 };
+    int flVisualMaxDistance{ 100 };
 
     // Misc
-    bool CrosshairEnable{ false };
+    bool bCrosshairEnable{ false };
     int CrosshairSize{ 5 };
     int CrosshairType{ 0 };
     int iMaxFramerate{ 185 };

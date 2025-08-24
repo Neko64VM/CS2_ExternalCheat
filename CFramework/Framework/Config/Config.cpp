@@ -219,18 +219,18 @@ void ConfigManager::LoadSetting(const std::string filename)
             g.dwAimKey0 = JSON["AimKey0"];
             g.dwAimKey1 = JSON["AimKey1"];
             // Aim
-            g.AimBotEnable = JSON["AimBotEnable"];
+            g.bAimBotEnable = JSON["AimBotEnable"];
             g.bShowFOV = JSON["bShowFOV"];
             g.bRainbowFOV = JSON["bRainbowFOV"];
-            g.AimFOV = JSON["AimFOV"];
-            g.AimSmooth = JSON["AimSmooth"];
-            g.AimMode = JSON["AimMode"];
-            g.AimKeyMode = JSON["AimKeyMode"];
-            g.AimTargetBone = JSON["AimTargetBone"];
-            g.AimMaxDistance = JSON["AimMaxDistance"];
+            g.iAimFov = JSON["AimFOV"];
+            g.flAimSmooth = JSON["AimSmooth"];
+            g.iAimMode = JSON["AimMode"];
+            g.iAimKeyMode = JSON["AimKeyMode"];
+            g.iAimTargetBone = JSON["AimTargetBone"];
+            g.iAimMaxDistance = JSON["AimMaxDistance"];
             // Visual
-            g.VisualEnable = JSON["VisualEnable"];
-            g.ESP_Team = JSON["ESP_Team"];
+            g.bVisualEnable = JSON["VisualEnable"];
+            g.bShowTeam = JSON["ESP_Team"];
             g.bBox = JSON["bBox"];
             g.bFilled = JSON["bFilled"];
             g.bLine = JSON["bLine"];
@@ -239,10 +239,10 @@ void ConfigManager::LoadSetting(const std::string filename)
             g.bDistance = JSON["bDistance"];
             g.bName = JSON["bName"];
             g.bWeapon = JSON["bWeapon"];
-            g.ESP_BoxType = JSON["ESP_BoxType"];
-            g.ESP_MaxDistance = JSON["ESP_MaxDistance"];
+            g.iBoxType = JSON["ESP_BoxType"];
+            g.flVisualMaxDistance = JSON["ESP_MaxDistance"];
             // Misc
-            g.CrosshairEnable = JSON["CrosshairEnable"];
+            g.bCrosshairEnable = JSON["CrosshairEnable"];
             g.CrosshairSize = JSON["CrosshairSize"];
             g.CrosshairType = JSON["CrosshairType"];
             g.iMaxFramerate = JSON["MaxFramerate"];
@@ -290,18 +290,18 @@ void ConfigManager::SaveSetting(const std::string filename)
         JSON["AimKey0"] = g.dwAimKey0;
         JSON["AimKey1"] = g.dwAimKey1;
         // Aim
-        JSON["AimBotEnable"] = g.AimBotEnable;
+        JSON["AimBotEnable"] = g.bAimBotEnable;
         JSON["bShowFOV"] = g.bShowFOV;
         JSON["bRainbowFOV"] = g.bRainbowFOV;
-        JSON["AimFOV"] = g.AimFOV;
-        JSON["AimSmooth"] = g.AimSmooth;
-        JSON["AimMode"] = g.AimMode;
-        JSON["AimKeyMode"] = g.AimKeyMode;
-        JSON["AimTargetBone"] = g.AimTargetBone;
-        JSON["AimMaxDistance"] = g.AimMaxDistance;
+        JSON["AimFOV"] = g.iAimFov;
+        JSON["AimSmooth"] = g.flAimSmooth;
+        JSON["AimMode"] = g.iAimMode;
+        JSON["AimKeyMode"] = g.iAimKeyMode;
+        JSON["AimTargetBone"] = g.iAimTargetBone;
+        JSON["AimMaxDistance"] = g.iAimMaxDistance;
         // Visual
-        JSON["VisualEnable"] = g.VisualEnable;
-        JSON["ESP_Team"] = g.ESP_Team;
+        JSON["VisualEnable"] = g.bVisualEnable;
+        JSON["ESP_Team"] = g.bShowTeam;
         JSON["bBox"] = g.bBox;
         JSON["bFilled"] = g.bFilled;
         JSON["bLine"] = g.bLine;
@@ -310,10 +310,10 @@ void ConfigManager::SaveSetting(const std::string filename)
         JSON["bDistance"] = g.bDistance;
         JSON["bName"] = g.bName;
         JSON["bWeapon"] = g.bWeapon;
-        JSON["ESP_BoxType"] = g.ESP_BoxType;
-        JSON["ESP_MaxDistance"] = g.ESP_MaxDistance;
+        JSON["ESP_BoxType"] = g.iBoxType;
+        JSON["ESP_MaxDistance"] = g.flVisualMaxDistance;
         // Misc
-        JSON["CrosshairEnable"] = g.CrosshairEnable;
+        JSON["CrosshairEnable"] = g.bCrosshairEnable;
         JSON["CrosshairSize"] = g.CrosshairSize;
         JSON["CrosshairType"] = g.CrosshairType;
         JSON["MaxFramerate"] = g.iMaxFramerate;
