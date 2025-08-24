@@ -26,9 +26,9 @@ bool Overlay::CreateOverlay()
     // Create Overlay
     wc = { sizeof(WNDCLASSEXA), 0, WndProc, 0, 0, NULL, NULL, NULL, NULL, m_szTitle, m_szClass, NULL};
     RegisterClassExA(&wc);
-    m_hWnd = CreateWindowExA(DefaultStyle, wc.lpszClassName, wc.lpszMenuName, WS_POPUP | WS_VISIBLE, g.ptPoint.x, g.ptPoint.y, g.rcSize.right, g.rcSize.bottom, NULL, NULL, wc.hInstance, NULL);
+    m_hWnd = CreateWindowExA(DefaultStyle, wc.lpszClassName, wc.lpszMenuName, WS_POPUP, g.ptPoint.x, g.ptPoint.y, g.rcSize.right, g.rcSize.bottom, NULL, NULL, wc.hInstance, NULL);
     SetLayeredWindowAttributes(m_hWnd, RGB(0, 0, 0), 255, LWA_ALPHA);
-    MARGINS margin = { -1 };
+    MARGINS margin{ -1 };
     DwmExtendFrameIntoClientArea(m_hWnd, &margin);
 
     if (!CreateDeviceD3D(m_hWnd))

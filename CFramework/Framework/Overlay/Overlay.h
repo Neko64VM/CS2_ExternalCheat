@@ -23,7 +23,7 @@ private:
 	POINT m_GamePoint{};
 
 	// オーバーレイのスタイル
-	LONG DefaultStyle = WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW;
+	LONG DefaultStyle = WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
 
 	bool CreateOverlay();
 	HWND GetTargetWindow(const std::string processName);	// 実行ファイル名からウィンドウハンドルを取得する
