@@ -60,7 +60,7 @@ void CFramework::RenderMenu()
         ImGui::Separator();
         ImGui::Spacing();
 
-        ImGui::Checkbox("AimBot", &g.AimBotEnable);
+        ImGui::Checkbox("AimBot", &g.bAimBotEnable);
 
         ImGui::EndChild();
         ImGui::BeginChild("##C001", ImVec2(ImGui::GetContentRegionAvail()), true);
@@ -69,14 +69,14 @@ void CFramework::RenderMenu()
         ImGui::Separator();
         ImGui::Spacing();
         
-        ImGui::CustomSliderInt("Aim FOV", "##a_fov", &g.AimFOV, 30, 150);
-        ImGui::CustomSliderFloat("Smooth", "##a_smt", &g.AimSmooth, 1.f, 30.f);
-        ImGui::CustomSliderInt("MaxDistance", "##a_dist", &g.AimMaxDistance, 15, 150);
+        ImGui::CustomSliderInt("Aim FOV", "##a_fov", &g.iAimFov, 30, 150);
+        ImGui::CustomSliderFloat("Smooth", "##a_smt", &g.flAimSmooth, 1.f, 30.f);
+        ImGui::CustomSliderInt("MaxDistance", "##a_dist", &g.iAimMaxDistance, 15, 150);
 
         ImGui::Spacing();
         ImGui::Spacing();
 
-        ImGui::Combo("TargetBone", &g.AimTargetBone, AimBoneList, IM_ARRAYSIZE(AimBoneList));
+        ImGui::Combo("TargetBone", &g.iAimTargetBone, AimBoneList, IM_ARRAYSIZE(AimBoneList));
 
         ImGui::EndChild();
         break;
@@ -86,9 +86,9 @@ void CFramework::RenderMenu()
         ImGui::Separator();
         ImGui::Spacing();
 
-        ImGui::Checkbox("ESP", &g.VisualEnable);
-        ImGui::Checkbox("2D Radar", &g.ESP_Radar);
-        ImGui::Checkbox("Team ESP", &g.ESP_Team);
+        ImGui::Checkbox("ESP", &g.bVisualEnable);
+        ImGui::Checkbox("2D Radar", &g.bShowRadar);
+        ImGui::Checkbox("Team ESP", &g.bShowTeam);
 
         ImGui::EndChild();
         ImGui::BeginChild("##C011", ImVec2(ImGui::GetContentRegionAvail()), true);
@@ -133,7 +133,7 @@ void CFramework::RenderMenu()
         ImGui::Text("System");
         ImGui::Separator();
         ImGui::Spacing();
-        ImGui::Checkbox("Crosshair", &g.CrosshairEnable);
+        ImGui::Checkbox("Crosshair", &g.bCrosshairEnable);
 
         ImGui::NewLine();
 
@@ -146,7 +146,7 @@ void CFramework::RenderMenu()
         ImGui::Separator();
         ImGui::Spacing();
 
-        ImGui::Checkbox("Crosshair", &g.CrosshairEnable);
+        ImGui::Checkbox("Crosshair", &g.bCrosshairEnable);
         ImGui::CustomSliderInt("CrosshairSize", "##SizeCH", &g.CrosshairSize, 1, 10);
         ImGui::ColorEdit4("Color##C", &g.Color_Crosshair.Value.x);
         ImGui::Combo("Type##C", &g.CrosshairType, CrosshairList, IM_ARRAYSIZE(CrosshairList));
@@ -181,7 +181,7 @@ void CFramework::RenderMenu()
         ImGui::Checkbox("Draw FOV", &g.bShowFOV);
         ImGui::Checkbox("Rainbow FOV", &g.bRainbowFOV);
         ImGui::ColorEdit3("Color", &g.Color_AimFOV.Value.x);
-        ImGui::CustomSliderInt("Aim FOV", "##a_fov", &g.AimFOV, 30, 300);
+        ImGui::CustomSliderInt("Aim FOV", "##a_fov", &g.iAimFov, 30, 300);
 
         ImGui::EndChild();
         ImGui::BeginChild("##101", ImVec2(ImGui::GetContentRegionAvail()), true);
@@ -190,7 +190,7 @@ void CFramework::RenderMenu()
         ImGui::Separator();
         ImGui::Spacing();
 
-        ImGui::Combo("KeyMode", &g.AimKeyMode, AimKeyModeList, IM_ARRAYSIZE(AimKeyModeList));
+        ImGui::Combo("KeyMode", &g.iAimKeyMode, AimKeyModeList, IM_ARRAYSIZE(AimKeyModeList));
 
         ImGui::NewLine();
 
@@ -221,13 +221,13 @@ void CFramework::RenderMenu()
         ImGui::Separator();
         ImGui::Spacing();
 
-        ImGui::CustomSliderFloat("Radar scale", "##R_SCALE", &g.ESP_RadarScale, 1.f, 20.f);
-        ImGui::CustomSliderInt("Distance", "##Distance", &g.ESP_MaxDistance, 10, 100);
+        ImGui::CustomSliderFloat("Radar scale", "##R_SCALE", &g.flRadarScale, 1.f, 20.f);
+        ImGui::CustomSliderInt("Distance", "##Distance", &g.flVisualMaxDistance, 10, 100);
 
         ImGui::Spacing();
         ImGui::Spacing();
 
-        ImGui::Combo("BoxType", &g.ESP_BoxType, BoxTypeList, IM_ARRAYSIZE(BoxTypeList));
+        ImGui::Combo("BoxType", &g.iBoxType, BoxTypeList, IM_ARRAYSIZE(BoxTypeList));
 
         ImGui::EndChild();
         ImGui::BeginChild("##C111", ImVec2(ImGui::GetContentRegionAvail()), true);
