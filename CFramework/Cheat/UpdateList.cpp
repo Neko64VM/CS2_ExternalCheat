@@ -30,25 +30,6 @@ void CFramework::UpdateList()
             }
         }
 
-        // C4
-        CC4 tC4 = CC4();
-
-        if (tC4.IsPlanted())
-        {
-            uintptr_t pEntityC4 = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwPlantedC4);
-
-            if (pEntityC4 != NULL)
-            {
-                tC4.m_address = m.Read<uintptr_t>(pEntityC4);
-
-                if (!Vec3_Empty(tC4.GetPosition()))
-                {
-                    std::lock_guard<std::mutex> lock(c4_mutex);
-                    entityC4 = tC4;
-                }
-            }
-        }
-
         // Player
         std::vector<CEntity> list_result{};
 

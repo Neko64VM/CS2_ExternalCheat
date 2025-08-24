@@ -12,10 +12,14 @@ bool InScreen(const BoundingBox* box)
     return !(box->top == 0 && box->bottom == 0 && box->left == 0 && box->right == 0);
 }
 
-// dev
-bool isColliding(const Vector2& a, const float radius_a, const Vector2& b, const float radius_b) {
-    float distance = (a - b).Length();
-    return distance <= (radius_a + radius_b);
+void MouseMove(int dx, int dy) {
+    INPUT input = { 0 };
+    input.type = INPUT_MOUSE;
+    input.mi.dx = dx;
+    input.mi.dy = dy;
+    input.mi.dwFlags = MOUSEEVENTF_MOVE;
+
+    SendInput(1, &input, sizeof(INPUT));
 }
 
 void CFramework::RenderInfo()
@@ -24,14 +28,14 @@ void CFramework::RenderInfo()
     g_gui->String(Vector2(3.f, 3.f), g_gui->TEXT_COLOR, 1.f, std::to_string((int)ImGui::GetIO().Framerate).c_str());
 
     // FOV Circle
-    if (g.AimBotEnable && g.bShowFOV) {
+    if (g.bAimBotEnable && g.bShowFOV) {
         ImColor rainbow{ g_gui->GenerateRainbow() };
         rainbow.Value.w = 0.35f;
-        g_gui->Circle(Vector2((g.rcSize.right / 2.f), (g.rcSize.bottom / 2.f)), g.AimFOV, g.bRainbowFOV ? rainbow : g.Color_AimFOV);
+        g_gui->Circle(Vector2((g.rcSize.right / 2.f), (g.rcSize.bottom / 2.f)), g.iAimFov, g.bRainbowFOV ? rainbow : g.Color_AimFOV);
     }
     
     // Crosshair
-    if (g.CrosshairEnable)
+    if (g.bCrosshairEnable)
     {
         switch (g.CrosshairType)
         {
@@ -56,7 +60,7 @@ void CFramework::RenderESP()
     float MinFov{ FLT_MAX };
     float MinDistance{ FLT_MAX };
     CEntity target = CEntity();
-    Vector2 ScreenMiddle{ g.rcSize.right / 2.f, g.rcSize.bottom / 2.f };
+    Vector2 screenCenter{ g.rcSize.right / 2.f, g.rcSize.bottom / 2.f };
 
     // Local
     CEntity local = GetLocalPlayer();
@@ -69,11 +73,11 @@ void CFramework::RenderESP()
 
     // Radar size and position
     static Vector2 s_radar_size{ 250.f, 250.f };
-    static Vector2 s_radar_pos{ 25.f, g.rcSize.bottom - (s_radar_size.y + 25.f) };
+    static Vector2 s_radar_pos{ g.rcSize.right - (s_radar_size.x + 25.f) , 25.f};
     static Vector2 s_radar_center{ s_radar_pos.x + s_radar_size.x / 2.f, s_radar_pos.y + s_radar_size.y / 2.f };
 
     // Radar frame
-    if (g.ESP_Radar)
+    if (g.bShowRadar)
     {
         g_gui->Rect(Vector2(s_radar_pos), Vector2(s_radar_pos + s_radar_size), ImColor(1.f, 1.f, 1.f, 0.5f));
         g_gui->Line(Vector2(s_radar_center.x, s_radar_pos.y), Vector2(s_radar_center.x, s_radar_pos.y + s_radar_size.y), ImColor(1.f, 1.f, 1.f, 0.5f), 1.f);
@@ -86,36 +90,6 @@ void CFramework::RenderESP()
         }
     }
 
-    // C4
-    {
-        CC4 pC4 = GetEntityC4();
-        Vector3 vecC4Origin = pC4.GetPosition();
-
-        if (!Vec3_Empty(vecC4Origin))
-        {
-            float flC4Blow = pC4.GetC4Blow();
-            
-            uintptr_t GlobalVars = m.Read<uintptr_t>(m.m_dwClientBaseAddr + g_game.dwGlobalVars);
-            float flCurrentTime = m.Read<float>(GlobalVars + 0x34);
-
-            if (flCurrentTime <= flC4Blow)
-            {
-                float result = flC4Blow - flCurrentTime;
-
-                Vector2 vOut{};
-                if (WorldToScreen(ViewMatrix, g.rcSize, vecC4Origin, vOut))
-                {
-                    std::string szC4 = "C4 [" + std::to_string((int)result) + "s]";
-                    g_gui->CircleFilled(vOut, 2.f, ImColor(0.f, 1.f, 0.f, 1.f), 1.f);
-
-                    // pC4.GetBombSite() == 0 ? "A" : "B";
-
-                    g_gui->String(Vector2(vOut.x - (ImGui::CalcTextSize(szC4.c_str()).x / 2.f), vOut.y + 1.f), ImColor(0.f, 1.f, 0.f, 1.f), ImGui::GetFontSize(), szC4.c_str());
-                }
-            }
-        }
-    }
-
     // ESP Loop
     for (auto& entity : GetEntityList())
     {
@@ -124,7 +98,7 @@ void CFramework::RenderESP()
 
         const float flDistance = ((local.m_vOldOrigin - entity.m_vOldOrigin).Length() * 0.01905f);
 
-        if (g.ESP_MaxDistance < flDistance)
+        if (g.flVisualMaxDistance < flDistance)
             continue;
 
         // ToDo
@@ -140,10 +114,10 @@ void CFramework::RenderESP()
         ImColor visualColor = g_gui->ApplyAlpha(tempColor, g.m_flGlobalAlpha);
 
         // 2D Radar
-        if (g.ESP_Radar)
+        if (g.bShowRadar)
         {
             Vector3 delta = entity.m_vOldOrigin - local.m_vOldOrigin;
-            float yaw = local.GetViewAngle().y * (M_PI / 180.f); // ToRadian
+            float yaw = local.GetEyeAngle().y * (M_PI / 180.f); // ToRadian
             float cosYaw = cosf(yaw);
             float sinYaw = sinf(yaw);
 
@@ -152,7 +126,7 @@ void CFramework::RenderESP()
                 delta.y * sinYaw + delta.x * cosYaw
             };
 
-            rotated /= g.ESP_RadarScale;
+            rotated /= g.flRadarScale;
             rotated *= -1.f;
             rotated += s_radar_center;
             rotated.x = std::clamp(rotated.x, s_radar_pos.x, s_radar_pos.x + s_radar_size.x);
@@ -185,7 +159,7 @@ void CFramework::RenderESP()
                 if (g.bFilled)
                     g_gui->RectFilled(bbox.left, bbox.top, bbox.right, bbox.bottom, shadow_color, g.m_flShadowAlpha);
 
-                switch (g.ESP_BoxType)
+                switch (g.iBoxType)
                 {
                 case 0:
                     g_gui->Rect(Vector2(bbox.left, bbox.top), Vector2(bbox.right, bbox.bottom), visualColor);
@@ -265,13 +239,13 @@ void CFramework::RenderESP()
             }
 
             // AimBot
-            if (g.AimBotEnable && local.m_iTeamNum != entity.m_iTeamNum)
+            if (g.bAimBotEnable && local.m_iTeamNum != entity.m_iTeamNum)
             {
-                if (flDistance > g.AimMaxDistance)
+                if (flDistance > g.iAimMaxDistance)
                     continue;
 
                 int boneId = 1;
-                switch (g.AimTargetBone)
+                switch (g.iAimTargetBone)
                 {
                 case 0: boneId = BONE_HEAD; break;
                 case 1: boneId = BONE_NECK; break;
@@ -286,9 +260,9 @@ void CFramework::RenderESP()
                     break;
 
                 // In FOV?
-                float FOV = abs((ScreenMiddle - BoneScreen).Length());
+                float FOV = abs((screenCenter - BoneScreen).Length());
 
-                if (FOV < g.AimFOV)
+                if (FOV < g.iAimFov)
                 {
                     if (target.m_address == NULL || MinFov > FOV)
                     {
@@ -300,23 +274,22 @@ void CFramework::RenderESP()
 
                 // AIM target line
                 if (lastTarget.m_address == entity.m_address)
-                    g_gui->Line(ScreenMiddle, BoneScreen, ImColor(1.f, 0.f, 0.f, 1.f));
+                    g_gui->Line(screenCenter, BoneScreen, ImColor(1.f, 0.f, 0.f, 1.f));
             }
         }
     }
 
     // AimBot - ToDo
-    if (target.m_address != NULL && AimBotKeyCheck(g.dwAimKey0, g.dwAimKey1, g.AimKeyMode))
+    if (target.m_address != NULL && AimBotKeyCheck(g.dwAimKey0, g.dwAimKey1, g.iAimKeyMode))
     {
         if (!target.IsAlive()) {
             target = CEntity();
             lastTarget = CEntity();
             return;
         }
-            
-
+        
         int boneId = 1;
-        switch (g.AimTargetBone)
+        switch (g.iAimTargetBone)
         {
         case 0: boneId = BONE_HEAD; break;
         case 1: boneId = BONE_NECK; break;
@@ -326,6 +299,19 @@ void CFramework::RenderESP()
             break;
         }
 
+        Vector2 bonePos{};
+        if (WorldToScreen(ViewMatrix, g.rcSize, target.GetBoneByID(boneId), bonePos))
+        {
+            Vector2 relative = screenCenter - bonePos;
+            relative *= -1;
+
+            relative /= g.flAimSmooth;
+
+            MouseMove(relative.x, relative.y);
+        }
+
+        /*
+        Memory based aimbot.
         Vector2 Angle = CalcAngle(local.GetCameraPosition(), target.GetBoneByID(boneId));
         Vector2 ViewAngle = local.GetViewAngle();
         Vector2 Delta = Angle - ViewAngle;
@@ -335,12 +321,13 @@ void CFramework::RenderESP()
 
         if (!Vec2_Empty(SmoothedAngle))
             m.Write<Vector2>(m.m_dwClientBaseAddr + g_game.dwViewAngles, SmoothedAngle);
+        */
 
         lastTarget = target;
     }
-    else if (g.AimBotEnable) 
+    else if (g.bAimBotEnable) 
     {
-        if (!AimBotKeyCheck(g.dwAimKey0, g.dwAimKey1, g.AimKeyMode))
+        if (!AimBotKeyCheck(g.dwAimKey0, g.dwAimKey1, g.iAimKeyMode))
             lastTarget = CEntity();
         else if (target.m_address == NULL)
             lastTarget = CEntity();
