@@ -40,9 +40,6 @@
     <Filter Include="Framework\ImGui\Fonts">
       <UniqueIdentifier>{00a1aa39-9b37-4ac6-9211-24f9f71b9cd7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Cheat\SDK\CC4">
-      <UniqueIdentifier>{f0d78c2c-1900-4b7a-a843-6cbfc5164ffd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Cheat\SDK\GameSDK">
       <UniqueIdentifier>{2294c04f-d365-473c-a496-2ef6fb1ad748}</UniqueIdentifier>
     </Filter>
@@ -117,9 +114,6 @@
     <ClCompile Include="Cheat\Render.cpp">
       <Filter>Cheat</Filter>
     </ClCompile>
-    <ClCompile Include="Cheat\SDK\CC4\CC4.cpp">
-      <Filter>Cheat\SDK\CC4</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cheat\SDK\GameSDK\GameSDK.h">
@@ -182,17 +176,8 @@
     <ClInclude Include="Cheat\CFramework.h">
       <Filter>Cheat</Filter>
     </ClInclude>
-    <ClInclude Include="Cheat\SDK\GameSDK\a2x\buttons.hpp">
-      <Filter>Cheat\SDK\GameSDK\a2x</Filter>
-    </ClInclude>
     <ClInclude Include="Cheat\SDK\GameSDK\a2x\client_dll.hpp">
       <Filter>Cheat\SDK\GameSDK\a2x</Filter>
-    </ClInclude>
-    <ClInclude Include="Cheat\SDK\GameSDK\a2x\offsets.hpp">
-      <Filter>Cheat\SDK\GameSDK\a2x</Filter>
-    </ClInclude>
-    <ClInclude Include="Cheat\SDK\CC4\CC4.h">
-      <Filter>Cheat\SDK\CC4</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
