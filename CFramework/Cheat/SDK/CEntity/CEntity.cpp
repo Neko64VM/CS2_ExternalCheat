@@ -120,6 +120,11 @@ CSkeletonArray CEntity::GetBoneList()
 	return m.Read<CSkeletonArray>(m_pBoneArray);
 }
 
+Vector2 CEntity::GetEyeAngle()
+{
+	return m.Read<Vector2>(m_pCSPlayerPawn + offset::m_angEyeAngles);
+}
+
 std::string CEntity::GetEntityClassName()
 {
 	uintptr_t pClassName = m.ReadChain(m_address, { 0x10, 0x20 });
@@ -130,9 +135,4 @@ std::string CEntity::GetEntityClassName()
 Vector3 CEntity::GetCameraPosition()
 {
 	return m.Read<Vector3>(m_pCSPlayerPawn + offset::m_vecLastClipCameraPos);
-}
-
-Vector2 CEntity::GetViewAngle()
-{
-	return m.Read<Vector2>(m.m_dwClientBaseAddr + offset::dwViewAngles);
 }

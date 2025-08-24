@@ -49,8 +49,7 @@ public:
 	BoundingBox GetBoundingBoxData(Matrix& ViewMatrix);
 	Vector3 GetBoneByID(const int ID);
 	CSkeletonArray GetBoneList();
-
+	Vector2 GetEyeAngle();
 	std::string GetEntityClassName();
-	Vector2 GetViewAngle();
 	Vector3 GetCameraPosition();
 };
