@@ -23,22 +23,9 @@ private:
     ImColor TEXT_COLOR_ATTENTION{ 1.f, 1.f, 0.f, 1.f };
     ImColor TEXT_COLOR_WARNING{ 1.f, 0.f, 0.f, 1.f };
 
-    // Thread safe.
-    std::mutex list_mutex;
-    std::mutex m_mtxLocal;
-
+    std::mutex m_mutex;
     CEntity localplayer;
-    std::vector<CEntity> EntityList{};
-
-    CEntity GetLocalPlayer() {
-        std::lock_guard<std::mutex> lock(m_mtxLocal);
-        return localplayer;
-    }
-
-    std::vector<CEntity> GetEntityList() {
-        std::lock_guard<std::mutex> lock(list_mutex);
-        return EntityList;
-    }
+    std::vector<CEntity> entitylist;
 
     bool AimBotKeyCheck(DWORD& AimKey0, DWORD& AimKey1, int AimKeyMode);
 };

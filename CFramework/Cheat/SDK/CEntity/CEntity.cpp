@@ -23,7 +23,7 @@ bool CEntity::UpdateStaticData(const uintptr_t& entitylist)
 		return false;
 
 	// pointers
-	m_pCSPlayerPawn = m.Read<uintptr_t>(list + 120 * (hPlayerPawn & 0x1FF));
+	m_pCSPlayerPawn = m.Read<uintptr_t>(list + 0x70 * (hPlayerPawn & 0x1FF));
 	m_pCollision = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pCollision);
 	m_pGameSceneNode = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pGameSceneNode);
 	m_pBoneArray = m.Read<uintptr_t>(m_pGameSceneNode + (offset::m_modelState + 0x80));

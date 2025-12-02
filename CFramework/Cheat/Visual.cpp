@@ -13,7 +13,7 @@ bool InScreen(const BoundingBox* box)
 }
 
 void MouseMove(int dx, int dy) {
-    INPUT input = { 0 };
+    INPUT input{ 0 };
     input.type = INPUT_MOUSE;
     input.mi.dx = dx;
     input.mi.dy = dy;
@@ -63,8 +63,15 @@ void CFramework::RenderESP()
     Vector2 screenCenter{ g.rcSize.right / 2.f, g.rcSize.bottom / 2.f };
 
     // Local
-    CEntity local = GetLocalPlayer();
+    CEntity local;
+    std::vector<CEntity> list;
 
+    if (true) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        local = localplayer;
+        list = entitylist;
+    }
+   
     if (!local.Update())
         return;
 
@@ -91,7 +98,7 @@ void CFramework::RenderESP()
     }
 
     // ESP Loop
-    for (auto& entity : GetEntityList())
+    for (auto& entity : list)
     {
         if (!entity.Update())
             continue;
@@ -310,8 +317,7 @@ void CFramework::RenderESP()
             MouseMove(relative.x, relative.y);
         }
 
-        /*
-        Memory based aimbot.
+        /*  - Memory Aimbot
         Vector2 Angle = CalcAngle(local.GetCameraPosition(), target.GetBoneByID(boneId));
         Vector2 ViewAngle = local.GetViewAngle();
         Vector2 Delta = Angle - ViewAngle;
