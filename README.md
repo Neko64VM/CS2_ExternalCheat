@@ -6,19 +6,21 @@
 * AimBot
 * ESP
 * 2D Radar
-* Simple Overlay
+* Simple Overlay with ImGui menu
 * PatternScanner
 * ConfigSystem
 
 ## Update
 [cs2-dumper](https://github.com/a2x/cs2-dumper) から、  
 
-* buttons.hpp  
 * client_dll.hpp  
-* offsets.hpp  
 
 を抽出し、"\CFramework\Cheat\SDK\GameSDK\a2x" に入てリビルドするだけです。  
 場合によってはパターンも更新する必要があるかもしれません。
+
+## ToDo
+* Scheme Dumperの実装、自動アップデートを行う
+* コードの最適化
 
 ## 実行
 必要なライブラリは全て揃っているので、VisualStudioでビルドすれば普通に動くはずです。  
