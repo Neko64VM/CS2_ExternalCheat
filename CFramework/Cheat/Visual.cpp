@@ -3,7 +3,7 @@
 
 #define M_PI 3.14159265358979323846
 
-CEntity lastTarget = CEntity();
+CEntity lastTarget{ CEntity(NULL) };
 auto g_gui = std::make_unique<Renderer>();
 
 // 厳密には違うけどね
@@ -54,22 +54,28 @@ void CFramework::RenderInfo()
     }
 }
 
+CEntity oldLocal{ CEntity(NULL) };
+std::vector<CEntity> oldList;
+
 void CFramework::RenderESP()
 {
     // AimBot
     float MinFov{ FLT_MAX };
     float MinDistance{ FLT_MAX };
-    CEntity target = CEntity();
+    CEntity target = CEntity(NULL);
     Vector2 screenCenter{ g.rcSize.right / 2.f, g.rcSize.bottom / 2.f };
 
     // Local
-    CEntity local;
+    CEntity local{ CEntity(NULL) };
     std::vector<CEntity> list;
 
+    // 前回の更新から大して時間が経っていなければスキップ - あとで実装
     if (true) {
         std::lock_guard<std::mutex> lock(m_mutex);
         local = localplayer;
         list = entitylist;
+		oldLocal = local;
+		oldList = list;
     }
    
     if (!local.Update())
@@ -191,16 +197,16 @@ void CFramework::RenderESP()
 
                     // 線を引くためのペアを作成する
                     const Vector3 skeleton_list[][2] = {
-                        { bArray.bone[BONE_NECK].position, bArray.bone[BONE_HIP].position },
+                        { bArray.bone[BONE_NECK].position, bArray.bone[BONE_PELVIS].position },
                         { bArray.bone[BONE_NECK].position, bArray.bone[BONE_LEFT_SHOULDER].position },
                         { bArray.bone[BONE_LEFT_SHOULDER].position, bArray.bone[BONE_LEFT_ARM].position },
                         { bArray.bone[BONE_LEFT_ARM].position, bArray.bone[BONE_LEFT_HAND].position },
                         { bArray.bone[BONE_NECK].position, bArray.bone[BONE_RIGHT_SHOULDER].position },
                         { bArray.bone[BONE_RIGHT_SHOULDER].position, bArray.bone[BONE_RIGHT_ARM].position },
                         { bArray.bone[BONE_RIGHT_ARM].position, bArray.bone[BONE_RIGHT_HAND].position },
-                        { bArray.bone[BONE_HIP].position, bArray.bone[BONE_LEFT_KNEE].position },
+                        { bArray.bone[BONE_PELVIS].position, bArray.bone[BONE_LEFT_KNEE].position },
                         { bArray.bone[BONE_LEFT_KNEE].position, bArray.bone[BONE_LEFT_FEET].position },
-                        { bArray.bone[BONE_HIP].position, bArray.bone[BONE_RIGHT_KNEE].position },
+                        { bArray.bone[BONE_PELVIS].position, bArray.bone[BONE_RIGHT_KNEE].position },
                         { bArray.bone[BONE_RIGHT_KNEE].position, bArray.bone[BONE_RIGHT_FEET].position }
                     };
 
@@ -256,7 +262,7 @@ void CFramework::RenderESP()
                 {
                 case 0: boneId = BONE_HEAD; break;
                 case 1: boneId = BONE_NECK; break;
-                case 2: boneId = BONE_SPINE; break;
+                case 2: boneId = BONE_SPINE_0; break;
                 case 3: boneId = BONE_HIP; break;
                 default:
                     break;
@@ -290,8 +296,8 @@ void CFramework::RenderESP()
     if (target.m_address != NULL && AimBotKeyCheck(g.dwAimKey0, g.dwAimKey1, g.iAimKeyMode))
     {
         if (!target.IsAlive()) {
-            target = CEntity();
-            lastTarget = CEntity();
+            target = CEntity(NULL);
+            lastTarget = CEntity(NULL);
             return;
         }
         
@@ -300,7 +306,7 @@ void CFramework::RenderESP()
         {
         case 0: boneId = BONE_HEAD; break;
         case 1: boneId = BONE_NECK; break;
-        case 2: boneId = BONE_SPINE; break;
+        case 2: boneId = BONE_SPINE_0; break;
         case 3: boneId = BONE_HIP; break;
         default:
             break;
@@ -334,8 +340,8 @@ void CFramework::RenderESP()
     else if (g.bAimBotEnable) 
     {
         if (!AimBotKeyCheck(g.dwAimKey0, g.dwAimKey1, g.iAimKeyMode))
-            lastTarget = CEntity();
+            lastTarget = CEntity(NULL);
         else if (target.m_address == NULL)
-            lastTarget = CEntity();
+            lastTarget = CEntity(NULL);
     }
 }

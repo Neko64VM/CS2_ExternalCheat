@@ -14,9 +14,9 @@ namespace offset
 	constexpr auto m_iTeamNum = C_BaseEntity::m_iTeamNum;
 	constexpr auto m_pCollision = C_BaseEntity::m_pCollision;
 	constexpr auto m_pGameSceneNode = C_BaseEntity::m_pGameSceneNode;
-	constexpr auto m_vecLastClipCameraPos = C_CSPlayerPawn::m_vecLastClipCameraPos;
+	//constexpr auto m_vecLastClipCameraPos = C_CSPlayerPawn::m_vecLastClipCameraPos;
 	constexpr auto m_angEyeAngles = C_CSPlayerPawn::m_angEyeAngles;
-	constexpr auto m_pClippingWeapon = C_CSPlayerPawn::m_pClippingWeapon;
+	//constexpr auto m_pClippingWeapon = C_CSPlayerPawn::m_pClippingWeapon;
 	constexpr auto m_vOldOrigin = C_BasePlayerPawn::m_vOldOrigin;
 	constexpr auto m_modelState = CSkeletonInstance::m_modelState;
 	constexpr auto m_bPawnIsAlive = CCSPlayerController::m_bPawnIsAlive;
@@ -37,23 +37,24 @@ public:
 
 enum CBoneID
 {
-	BONE_HEAD = 6,
-	BONE_NECK = 5,
-	BONE_SPINE = 4,
-	BONE_SPINE_1 = 2,
-	BONE_HIP = 0,
+	BONE_PELVIS = 1,
+	BONE_SPINE_0 = 2,
+	BONE_SPINE_1 = 3,
+	BONE_HIP = 4,
+	BONE_NECK = 6,
+	BONE_HEAD = 7,
 	BONE_LEFT_SHOULDER = 8,
 	BONE_LEFT_ARM = 9,
-	BONE_LEFT_HAND = 10,
+	BONE_LEFT_HAND = 11,
 	BONE_RIGHT_SHOULDER = 13,
 	BONE_RIGHT_ARM = 14,
 	BONE_RIGHT_HAND = 15,
-	BONE_LEFT_HIP = 22,
-	BONE_LEFT_KNEE = 23,
-	BONE_LEFT_FEET = 24,
-	BONE_RIGHT_HIP = 25,
-	BONE_RIGHT_KNEE = 26,
-	BONE_RIGHT_FEET = 27,
+	BONE_LEFT_HIP = 17,	 // 腰
+	BONE_LEFT_KNEE = 18, // 膝
+	BONE_LEFT_FEET = 19, // 足
+	BONE_RIGHT_HIP = 20,  // 腰
+	BONE_RIGHT_KNEE = 21, // 膝
+	BONE_RIGHT_FEET = 22, // 足
 };
 
 extern CGameAddress g_game;

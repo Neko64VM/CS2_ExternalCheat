@@ -16,12 +16,14 @@ struct alignas(0x20) CBone {
 };
 
 struct CSkeletonArray {
-	CBone bone[28]{};
+	CBone bone[32]{};
 };
 
 class CEntity
 {
 public:
+	CEntity(uintptr_t address) : m_address(address) {}
+
 	// pointer
 	uintptr_t m_address{ 0 };
 	uintptr_t m_pCSPlayerPawn{ 0 };

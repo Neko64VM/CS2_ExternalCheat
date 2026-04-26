@@ -1,6 +1,6 @@
 #include "CEntity.h"
 
-// 毎フレーム更新する必要のある情報
+// 毎フレーム更新する必要のある情報 - 64tickなのでマイフレーム更新を行う必要は必ずしもないかも？
 bool CEntity::Update()
 {
 	if (!IsAlive())
@@ -27,7 +27,7 @@ bool CEntity::UpdateStaticData(const uintptr_t& entitylist)
 	m_pCollision = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pCollision);
 	m_pGameSceneNode = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pGameSceneNode);
 	m_pBoneArray = m.Read<uintptr_t>(m_pGameSceneNode + (offset::m_modelState + 0x80));
-	m_pClippingWeapon = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pClippingWeapon);
+	//m_pClippingWeapon = m.Read<uintptr_t>(m_pCSPlayerPawn + offset::m_pClippingWeapon);
 
 	// entity data
 	m_iTeamNum = m.Read<int>(m_address + offset::m_iTeamNum);
@@ -39,6 +39,7 @@ bool CEntity::UpdateStaticData(const uintptr_t& entitylist)
 	if (pNameAddress != NULL)
 		m_szPlayerName = m.ReadStringA(pNameAddress);
 
+	/*
 	// Weapon name
 	uintptr_t pWeaponEntity = m.ReadChain(m_pClippingWeapon, { 0x10, 0x20 });
 
@@ -49,6 +50,7 @@ bool CEntity::UpdateStaticData(const uintptr_t& entitylist)
 		if (szWName.find("weapon_") != std::string::npos)
 			m_szWeaponName = szWName.substr(7, szWName.length());
 	}
+	*/
 
 	return true;
 }
@@ -134,5 +136,5 @@ std::string CEntity::GetEntityClassName()
 
 Vector3 CEntity::GetCameraPosition()
 {
-	return m.Read<Vector3>(m_pCSPlayerPawn + offset::m_vecLastClipCameraPos);
+	return m.Read<Vector3>(m_pCSPlayerPawn + 0);
 }

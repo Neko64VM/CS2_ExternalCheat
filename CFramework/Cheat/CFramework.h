@@ -24,7 +24,7 @@ private:
     ImColor TEXT_COLOR_WARNING{ 1.f, 0.f, 0.f, 1.f };
 
     std::mutex m_mutex;
-    CEntity localplayer;
+    CEntity localplayer{ CEntity(NULL) };
     std::vector<CEntity> entitylist;
 
     bool AimBotKeyCheck(DWORD& AimKey0, DWORD& AimKey1, int AimKeyMode);

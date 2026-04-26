@@ -21,7 +21,7 @@ bool CGameAddress::InitOffset()
 	dwGlobalVars = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 15 ?? ?? ?? ?? 48 89 42", 3, 7);
 	printf("dwGlobalVars : 0x%llx\n", dwGlobalVars);
 
-	dwEntityList = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 35 ?? ?? ?? ?? 48 85 f6", 3, 7);
+	dwEntityList = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 89 0d ?? ?? ?? ??  e9 ?? ?? ?? ?? cc", 3, 7);
 	printf("dwEntityList : 0x%llx\n", dwEntityList);
 
 	dwLocalPlayerController = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8b 05 ?? ?? ?? ?? 41 89 be", 3, 7);
@@ -29,9 +29,6 @@ bool CGameAddress::InitOffset()
 
 	dwViewMatrix = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8d 0d ?? ?? ?? ?? 48 c1 e0 06", 3, 7);
 	printf("dwViewMatrix : 0x%llx\n", dwViewMatrix);
-
-	dwPlantedC4 = m.FindPattern(bytes, m.m_dwClientBaseAddr, "48 8b 15 ?? ?? ?? ?? 41 ff c0", 3, 7);
-	printf("dwPlantedC4 : 0x%llx\n", dwPlantedC4);
 
 	bytes.clear();
 
